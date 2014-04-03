@@ -1,0 +1,31 @@
+{
+    "name": "cygnus/api-suite-bundle",
+    "description": "API Suite Bundle for Symfony2 projects",
+    "autoload": {
+        "psr-0": {
+            "Cygnus\\": ""
+        }
+    },
+    "target-dir": "Cygnus/ApiSuiteBundle",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Jacob Bare",
+            "email": "jacob.bare@cygnus.com"
+        },
+        {
+            "name": "Josh Worden",
+            "email": "josh.worden@cygnus.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.2.0",
+        "ext-curl": "*",
+        "ext-json": "*"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.1.x-dev"
+        }
+    }
+}
