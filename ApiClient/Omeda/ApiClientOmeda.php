@@ -2,22 +2,11 @@
 namespace Cygnus\ApiSuiteBundle\ApiClient\Omeda;
 
 use 
-    Cygnus\ApiSuiteBundle\ApiClient\ApiClientInterface,
-    Cygnus\ApiSuiteBundle\RemoteKernel\RemoteKernelInterface,
-    Symfony\Component\HttpFoundation\ParameterBag,
-    Symfony\Component\HttpFoundation\Request,
-    Symfony\Component\HttpFoundation\Response
+    Cygnus\ApiSuiteBundle\ApiClient\ApiClientAbstract,
     \DateTime;
 
-class ApiClientOmeda implements ApiClientInterface
+class ApiClientOmeda extends ApiClientAbstract
 {
-    /**
-     * The remote HttpKernel for sending Request objects and receiving Response objects
-     *
-     * @var Symfony\Component\HttpKernel\HttpKernelInterface
-     */
-    protected $httpKernel;
-
     /**
      * An array of request methods that this API supports
      *
@@ -403,32 +392,6 @@ class ApiClientOmeda implements ApiClientInterface
     }
 
     /**
-     * Sets the configuration options for this API client
-     * host: e.g. ows.omeda.com; brand: e.g. avvdb
-     * appid: the assigned id for reading; inputid: the assigned id for writing
-     *
-     * @param  array $config The config options
-     * @return self
-     */
-    public function setConfig(array $config) 
-    {
-        $this->config = new ParameterBag($config);
-        return $this;
-    }
-
-    /**
-     * Sets the remote RemoteKernelInterface for sending Request objects and returning Response objects
-     *
-     * @param  Cygnus\ApiSuiteBundle\RemoteKernel\RemoteKernelInterface $httpKernel
-     * @return self
-     */
-    public function setRemoteHttpKernel(RemoteKernelInterface $httpKernel)
-    {
-        $this->httpKernel = $httpKernel;
-        return $this;
-    }
-
-    /**
      * Handles a request by creating a Request object and sending it to the Kernel
      *
      * @param  string $endpoint   The API endpoint
@@ -441,18 +404,6 @@ class ApiClientOmeda implements ApiClientInterface
     {
         $request = $this->createRequest($endpoint, $content, $method, $clientCall);
         return $this->doRequest($request);
-    }
-
-    /**
-     * Takes a Request object and performs the request via the HttpKernelInterface
-     * This should return a Response object
-     *
-     * @param  Symfony\Component\HttpFoundation\Request $request
-     * @return Symfony\Component\HttpFoundation\Response
-     */
-    public function doRequest(Request $request)
-    {
-        return $this->httpKernel->handle($request);
     }
 
     /**
@@ -525,19 +476,6 @@ class ApiClientOmeda implements ApiClientInterface
             $date->setTimestamp(strtotime($value));
         }
         return $date->format($format);
-    }
-
-    /**
-     * Determines if the API instance has a valid configuration
-     *
-     * @return bool
-     */
-    public function hasValidConfig()
-    {
-        foreach ($this->requiredConfigOptions as $option) {
-            if (!$this->config->has($option)) return false;
-        }
-        return true;
     }
 
     /**
