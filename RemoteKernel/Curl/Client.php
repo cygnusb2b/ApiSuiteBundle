@@ -7,6 +7,7 @@ use Symfony\Component\BrowserKit\CookieJar;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Bridge\Monolog\Logger;
 
 class Client
 {
@@ -59,10 +60,12 @@ class Client
      *
      * @return void
      */
-    public function __construct(ResponseHeaderProcessor $h, ResponseBodyProcessor $b) {
+    public function __construct(ResponseHeaderProcessor $h, ResponseBodyProcessor $b, Logger $l)
+    {
         $this->headerProcessor = $h;
         $this->bodyProcessor = $b;
         $this->cookieJar = new CookieJar();
+        $this->logger = $l;
         $this->initHandle();
     }
 
@@ -159,6 +162,8 @@ class Client
         $ch = $this->getHandle();
         curl_setopt_array($ch, $this->getOptions());
         curl_exec($ch);
+
+        $this->logger->info('Curl: '. $this->request->getUri());
 
         if (!curl_errno($ch)) {
             $this->handleResponse();

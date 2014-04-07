@@ -12,7 +12,9 @@ services:
         class: %cygnus_api_suite.curl.processor.body.class%
     cygnus_api_suite.curl.client:
         class: %cygnus_api_suite.curl.client.class%
-        arguments: [@cygnus_api_suite.curl.header_processor, @cygnus_api_suite.curl.body_processor]
+        arguments: [@cygnus_api_suite.curl.header_processor, @cygnus_api_suite.curl.body_processor, @logger]
+        tags:
+            - { name: monolog.logger, channel: api_suite}
     cygnus_api_suite.curl.kernel:
         class: %cygnus_api_suite.curl.kernel.class%
         arguments: [@cygnus_api_suite.curl.client]
