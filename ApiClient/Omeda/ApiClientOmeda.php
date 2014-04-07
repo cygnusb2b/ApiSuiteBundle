@@ -1,9 +1,9 @@
 <?php
 namespace Cygnus\ApiSuiteBundle\ApiClient\Omeda;
 
-use 
-    Cygnus\ApiSuiteBundle\ApiClient\ApiClientAbstract,
-    \DateTime;
+use Cygnus\ApiSuiteBundle\ApiClient\ApiClientAbstract;
+
+use \DateTime;
 
 class ApiClientOmeda extends ApiClientAbstract
 {
@@ -46,7 +46,7 @@ class ApiClientOmeda extends ApiClientAbstract
      * @param  int $customerId The Omeda CustomerId to lookup
      * @return Symfony\Component\HttpFoundation\Response
      */
-    public function customerLookupById($customerId) 
+    public function customerLookupById($customerId)
     {
         $endpoint = '/customer/' . $customerId . '/*';
         return $this->handleRequest($endpoint);
@@ -59,7 +59,7 @@ class ApiClientOmeda extends ApiClientAbstract
      * @param  string $encryptedId The Omeda EncryptedCustomerId to lookup
      * @return Symfony\Component\HttpFoundation\Response
      */
-    public function customerLookupByEncryptedId($encryptedId) 
+    public function customerLookupByEncryptedId($encryptedId)
     {
         $endpoint = '/customer/' . $encryptedId . '/encrypted/*';
         return $this->handleRequest($endpoint);
@@ -111,7 +111,7 @@ class ApiClientOmeda extends ApiClientAbstract
      * @param  int $transactionId The transaction ID to lookup
      * @return Symfony\Component\HttpFoundation\Response
      */
-    public function customerTransactionLookup($transactionId) 
+    public function customerTransactionLookup($transactionId)
     {
         $endpoint = '/transaction/' . $transactionId . '/*';
         return $this->handleRequest($endpoint);
@@ -124,9 +124,9 @@ class ApiClientOmeda extends ApiClientAbstract
      * @param  int $customerId The Omeda CustomerId to lookup
      * @return Symfony\Component\HttpFoundation\Response
      */
-    public function customerBehaviorLookup($customerId) 
+    public function customerBehaviorLookup($customerId)
     {
-        $endpoint = '/customer/' . $customerId . '/behavior/*';  
+        $endpoint = '/customer/' . $customerId . '/behavior/*';
         return $this->handleRequest($endpoint);
     }
 
@@ -138,7 +138,7 @@ class ApiClientOmeda extends ApiClientAbstract
      * @param  int $behaviorId The Omeda BehaviorId to lookup
      * @return Symfony\Component\HttpFoundation\Response
      */
-    public function customerBehaviorLookupByBehavior($customerId, $behaviorId) 
+    public function customerBehaviorLookupByBehavior($customerId, $behaviorId)
     {
         $endpoint = '/customer/' . $customerId . '/behavior/' . $behaviorId . '/*';
         return $this->handleRequest($endpoint);
@@ -152,7 +152,7 @@ class ApiClientOmeda extends ApiClientAbstract
      * @param  int $productId  The Omeda ProductId to lookup
      * @return Symfony\Component\HttpFoundation\Response
      */
-    public function customerBehaviorLookupByProduct($customerId, $productId) 
+    public function customerBehaviorLookupByProduct($customerId, $productId)
     {
         $endpoint = '/customer/' . $customerId . '/behavior/product/' . $productId . '/*';
         return $this->handleRequest($endpoint);
@@ -195,7 +195,7 @@ class ApiClientOmeda extends ApiClientAbstract
      *
      * @return Symfony\Component\HttpFoundation\Response
      */
-    public function brandComprehensiveLookup() 
+    public function brandComprehensiveLookup()
     {
         $endpoint = '/comp/*';
         return $this->handleRequest($endpoint);
@@ -256,8 +256,12 @@ class ApiClientOmeda extends ApiClientAbstract
             'ActionId'      => (int) $actionId,
             'Description'   => $description,
         );
-        if (is_scalar($alternateId)) $requestBody['AlternateId'] = (string) $alternateId;
-        if (is_scalar($productId))   $requestBody['ProductId']   = (int) $product_id;
+        if (is_scalar($alternateId)) {
+            $requestBody['AlternateId'] = (string) $alternateId;
+        }
+        if (is_scalar($productId)) {
+            $requestBody['ProductId']   = (int) $product_id;
+        }
 
         return $this->handleRequest($endpoint, $requestBody, 'POST');
     }
@@ -274,7 +278,7 @@ class ApiClientOmeda extends ApiClientAbstract
     public function brandBehaviorUpdate($behaviorId, $alternateId = null, $statusCode = null)
     {
         $endpoint = '/behavior/*';
-        
+
         $requestBody = array(
             'Id'    => (int) $behaviorId,
         );
@@ -282,7 +286,9 @@ class ApiClientOmeda extends ApiClientAbstract
         if (in_array((int) $statusCode, [0, 1])) {
             $requestBody['StatusCode'] = (int) $statusCode;
         }
-        if (is_scalar($alternateId)) $requestBody['AlternateId'] = (string) $alternateId;
+        if (is_scalar($alternateId)) {
+            $requestBody['AlternateId'] = (string) $alternateId;
+        }
 
         return $this->handleRequest($endpoint, $requestBody, 'PUT');
     }
@@ -336,7 +342,7 @@ class ApiClientOmeda extends ApiClientAbstract
         $endpoint = '/optinfilterqueue/*';
         return $this->handleRequest($endpoint, $requestBody, 'POST', true);
     }
-   
+
 
     /**
      * Sends Optout Information to the Omail Filter
@@ -385,7 +391,7 @@ class ApiClientOmeda extends ApiClientAbstract
      * @param  array|string $requestBody The request body to send to the API
      * @return Symfony\Component\HttpFoundation\Response
      */
-    public function omailDeploymentSearch($params) 
+    public function omailDeploymentSearch($params)
     {
         $endpoint = '/omail/deployment/search/*';
         return $this->handleRequest($endpoint, $requestBody, 'POST');
@@ -413,7 +419,7 @@ class ApiClientOmeda extends ApiClientAbstract
      * @param  string $endpoint   The API endpoint
      * @param  mixed  $content    The request body content to use
      * @param  string $method     The request method
-     * @param  bool   $clientCall Whether this is an API that applies to the entire customer/client 
+     * @param  bool   $clientCall Whether this is an API that applies to the entire customer/client
      * @return Symfony\Component\HttpFoundation\Request
      * @throws \Exception If the API configuration is invalid, or a non-allowed request method is passed
      */
@@ -422,7 +428,7 @@ class ApiClientOmeda extends ApiClientAbstract
         if ($this->hasValidConfig()) {
 
             $method = strtoupper($method);
-            if (!in_array($method, $this->supportedMethods))  {
+            if (!in_array($method, $this->supportedMethods)) {
                 // Request method not allowed by the API
                 throw new \Exception(sprintf('The request method %s is not allowed. Only %s methods are supported.'), $method, implode(', ', $this->supportedMethods));
             }
@@ -492,7 +498,7 @@ class ApiClientOmeda extends ApiClientAbstract
         } else {
             $uri = 'https://' . $this->getHost() . '/webservices/rest/brand/' . $this->getBrand();
         }
-        
+
         // Add the API endpoint, if sent
         if (!is_null($endpoint)) {
             $uri .= rtrim($endpoint, '/');

@@ -202,7 +202,7 @@ class Client
     }
 
     /**
-     * Runs methods after the request is executed 
+     * Runs methods after the request is executed
      * Used primarily for cleanup: headers and data aren't saved after each request (unless flagged as sticky)
      *
      * @return self
@@ -336,23 +336,23 @@ class Client
             'GET'   => array(
                 'option'    => CURLOPT_HTTPGET,
                 'value'     => true,
-            ), 
+            ),
             'POST'   => array(
                 'option'    => CURLOPT_POST,
                 'value'     => true,
-            ), 
+            ),
             'PUT'   => array(
                 'option'    => CURLOPT_PUT,
                 'value'     => true,
-            ), 
+            ),
             'DELETE'   => array(
                 'option'    => CURLOPT_CUSTOMREQUEST,
                 'value'     => 'DELETE',
-            ), 
+            ),
             'OPTIONS'   => array(
                 'option'    => CURLOPT_CUSTOMREQUEST,
                 'value'     => 'OPTIONS',
-            ), 
+            ),
             'HEAD'   => array(
                 'option'    => CURLOPT_NOBODY,
                 'value'     => true,
@@ -442,7 +442,7 @@ class Client
      * @param  mixed $value The option value
      * @return Cygnus\CurlBundle\Curl\Client
      */
-    public function addOption($option, $value) 
+    public function addOption($option, $value)
     {
         $this->options[$option] = $value;
         return $this;
@@ -455,21 +455,21 @@ class Client
      * @param  mixed $value The option value
      * @return Cygnus\CurlBundle\Curl\Client
      */
-    public function removeOption($option, $value) 
+    public function removeOption($option, $value)
     {
         if (array_key_exists($option, $options)) {
             unset($this->options[$option]);
         }
         return $this;
     }
-   
+
     /**
      * Return the value of the specified option
      *
      * @param  const $option The CURL option constant
      * @return mixed The option value
      */
-    public function getOption($option) 
+    public function getOption($option)
     {
         if (array_key_exists($option, $options)) {
             return $this->options[$option];
@@ -483,18 +483,18 @@ class Client
      *
      * @return array The option values
      */
-    public function getOptions() 
+    public function getOptions()
     {
         return $this->options;
     }
-   
+
     /**
-     * Set CURL options for the request 
+     * Set CURL options for the request
      *
      * @param array The cURL options
      * @return Cygnus\CurlBundle\Curl\Client
      */
-    public function setOptions(array $options) 
+    public function setOptions(array $options)
     {
         $this->options = $options;
         return $this;
@@ -505,8 +505,10 @@ class Client
      *
      * @return void
      */
-    public function __destruct() 
+    public function __destruct()
     {
-       if (is_resource($this->handle)) curl_close($this->handle);
+        if (is_resource($this->handle)) {
+            curl_close($this->handle);
+        }
     }
 }
