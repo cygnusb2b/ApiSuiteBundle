@@ -1,13 +1,12 @@
 <?php
 namespace Cygnus\ApiSuiteBundle\RemoteKernel\Curl;
 
-use 
-    Cygnus\ApiSuiteBundle\RemoteKernel\Curl\Processor\ResponseHeaderProcessor,
-    Cygnus\ApiSuiteBundle\RemoteKernel\Curl\Processor\ResponseBodyProcessor,
-    Symfony\Component\BrowserKit\CookieJar,
-    Symfony\Component\HttpFoundation\Cookie,
-    Symfony\Component\HttpFoundation\Request,
-    Symfony\Component\HttpFoundation\Response;
+use Cygnus\ApiSuiteBundle\RemoteKernel\Curl\Processor\ResponseHeaderProcessor;
+use Cygnus\ApiSuiteBundle\RemoteKernel\Curl\Processor\ResponseBodyProcessor;
+use Symfony\Component\BrowserKit\CookieJar;
+use Symfony\Component\HttpFoundation\Cookie;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class Client
 {
@@ -413,7 +412,11 @@ class Client
         // Unset any previously sent headers
         curl_setopt($ch, CURLOPT_HTTPHEADER, array());
         // Reset request method
-        curl_setopt($ch, CURLOPT_HTTPGET, TRUE);
+        curl_setopt($ch, CURLOPT_HTTPGET, true);
+
+        $this->headerProcessor->reset();
+        $this->bodyProcessor->reset();
+
         return $this;
     }
 

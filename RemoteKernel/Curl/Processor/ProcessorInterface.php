@@ -1,7 +1,9 @@
 <?php
 namespace Cygnus\ApiSuiteBundle\RemoteKernel\Curl\Processor;
 
-interface ProcessorInterface {
-    function process();
-    function get();
+interface ProcessorInterface
+{
+    public function process();
+    public function get();
+    public function reset();
 }

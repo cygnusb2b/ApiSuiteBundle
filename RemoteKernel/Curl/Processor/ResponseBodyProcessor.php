@@ -29,4 +29,9 @@ class ResponseBodyProcessor implements ProcessorInterface
     {
         return $this->content;
     }
+
+    public function reset()
+    {
+        $this->content = '';
+    }
 }

@@ -48,6 +48,11 @@ class ResponseHeaderProcessor implements ProcessorInterface
         $this->statusMessage = $message;
     }
 
+    public function reset()
+    {
+        $this->headers = array();
+    }
+
     /**
      * Parses an individual header and sets it to the header array
      * 'Content-Type: application/json' is set to $this->headers['Content-Type'] = 'application/json'
