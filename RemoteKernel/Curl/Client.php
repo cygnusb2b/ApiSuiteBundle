@@ -4,6 +4,8 @@ namespace Cygnus\ApiSuiteBundle\RemoteKernel\Curl;
 use 
     Cygnus\ApiSuiteBundle\RemoteKernel\Curl\Processor\ResponseHeaderProcessor,
     Cygnus\ApiSuiteBundle\RemoteKernel\Curl\Processor\ResponseBodyProcessor,
+    Symfony\Component\BrowserKit\CookieJar,
+    Symfony\Component\HttpFoundation\Cookie,
     Symfony\Component\HttpFoundation\Request,
     Symfony\Component\HttpFoundation\Response;
 
@@ -51,6 +53,8 @@ class Client
      */
     private $bodyProcessor;
 
+    public $cookieJar;
+
     /**
      * Constructor; initialize the cURL handle and set the response processors
      *
@@ -59,6 +63,7 @@ class Client
     public function __construct(ResponseHeaderProcessor $h, ResponseBodyProcessor $b) {
         $this->headerProcessor = $h;
         $this->bodyProcessor = $b;
+        $this->cookieJar = new CookieJar();
         $this->initHandle();
     }
 
@@ -158,6 +163,7 @@ class Client
 
         if (!curl_errno($ch)) {
             $this->handleResponse();
+            $this->completeRequest();
             return $this->getResponse();
         } else {
             throw new \Exception(sprintf('PHP cURL Error: (%s), Error: %s', curl_error($ch), curl_errno($ch)));
@@ -189,6 +195,18 @@ class Client
             $response->headers->set('Content-Length', strlen($response->getContent()));
         }
         $this->setResponse($response);
+    }
+
+    /**
+     * Runs methods after the request is executed 
+     * Used primarily for cleanup: headers and data aren't saved after each request (unless flagged as sticky)
+     *
+     * @return self
+     */
+    private function completeRequest()
+    {
+        $this->resetOptions();
+        return $this;
     }
 
     /**
@@ -235,7 +253,7 @@ class Client
         if (!empty($content)) {
             $post = $content;
         } else {
-            $post = $this->request->request->all();
+            $post = http_build_query($this->request->request->all());
         }
 
         $this->addOption(CURLOPT_POSTFIELDS, $post);
@@ -338,6 +356,18 @@ class Client
         );
     }
 
+    public function createCookie($name, $value = null, $expire = 0, $path = '/', $domain = null, $secure = false, $httpOnly = true)
+    {
+        $cookie = new Cookie($name, $value, $expire, $path, $domain, $secure, $httpOnly);
+        $this->setCookie($cookie);
+        return $cookie;
+    }
+
+    public function setCookie(Cookie $cookie)
+    {
+        $this->cookieJar->set($cookie);
+    }
+
     /**
      * Initialize and set the cURL resource handle
      *
@@ -365,6 +395,26 @@ class Client
             CURLOPT_WRITEFUNCTION   => array($this->bodyProcessor,   "process"),
         );
         $this->setOptions($defaults);
+    }
+
+    /**
+    * Reset the CURL options for the request, except for cookies
+    *
+    * @return Curl_Client
+    */
+    public function resetOptions()
+    {
+        $ch = $this->getHandle();
+        $this->options = array();
+        // curl_reset($this->getHandle()) # Available in PHP 5.5
+
+        // Unset any previously sent POST fields
+        curl_setopt($ch, CURLOPT_POSTFIELDS, '');
+        // Unset any previously sent headers
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array());
+        // Reset request method
+        curl_setopt($ch, CURLOPT_HTTPGET, TRUE);
+        return $this;
     }
 
     /**
