@@ -17,7 +17,7 @@ abstract class ApiClientAbstract implements ApiClientInterface
     protected $httpKernel;
 
     /**
-     * The comfiguration options
+     * The configuration options
      *
      * @var Symfony\Component\HttpFoundation\ParameterBag
      */

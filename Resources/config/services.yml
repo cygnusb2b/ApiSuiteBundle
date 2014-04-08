@@ -4,6 +4,8 @@ parameters:
     cygnus_api_suite.curl.processor.header.class: Cygnus\ApiSuiteBundle\RemoteKernel\Curl\Processor\ResponseHeaderProcessor
     cygnus_api_suite.curl.processor.body.class: Cygnus\ApiSuiteBundle\RemoteKernel\Curl\Processor\ResponseBodyProcessor
     cygnus_api_suite.api_client.omeda.class: Cygnus\ApiSuiteBundle\ApiClient\Omeda\ApiClientOmeda
+    cygnus_api_suite.api_client.openx.class: Cygnus\ApiSuiteBundle\ApiClient\OpenX\ApiClientOpenX
+    cygnus_api_suite.oauth.kernel.class: Cygnus\ApiSuiteBundle\RemoteKernel\OAuth1a\RemoteKernel
 
 services:
     cygnus_api_suite.curl.header_processor:
@@ -18,7 +20,14 @@ services:
     cygnus_api_suite.curl.kernel:
         class: %cygnus_api_suite.curl.kernel.class%
         arguments: [@cygnus_api_suite.curl.client]
+    cygnus_api_suite.oauth.kernel:
+        class: %cygnus_api_suite.oauth.kernel.class%
+        arguments: [@cygnus_api_suite.curl.client]
     cygnus_api_suite.api_client.omeda:
         class: %cygnus_api_suite.api_client.omeda.class%
         calls:
              - [setRemoteHttpKernel, [@cygnus_api_suite.curl.kernel]]
+    cygnus_api_suite.api_client.openx:
+        class: %cygnus_api_suite.api_client.openx.class%
+        calls:
+             - [setRemoteHttpKernel, [@cygnus_api_suite.oauth.kernel]]

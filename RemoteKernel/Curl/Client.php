@@ -3,7 +3,7 @@ namespace Cygnus\ApiSuiteBundle\RemoteKernel\Curl;
 
 use Cygnus\ApiSuiteBundle\RemoteKernel\Curl\Processor\ResponseHeaderProcessor;
 use Cygnus\ApiSuiteBundle\RemoteKernel\Curl\Processor\ResponseBodyProcessor;
-use Symfony\Component\BrowserKit\CookieJar;
+use Cygnus\ApiSuiteBundle\RemoteKernel\Curl\Component\CookieJar;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -53,7 +53,13 @@ class Client
      */
     private $bodyProcessor;
 
-    public $cookieJar;
+
+    /**
+     * The cookie jar for storing/handling cookies from responses
+     *
+     * @var Cygnus\ApiSuiteBundle\RemoteKernel\Curl\Component\CookieJar
+     */
+    protected $cookieJar;
 
     /**
      * Constructor; initialize the cURL handle and set the response processors
@@ -94,6 +100,8 @@ class Client
     {
         $this->request = $request;
         $this->setOptionsFromRequest();
+        $this->appendCookieJarCookies();
+        // print_r($this->request);
         return $this;
     }
 
@@ -142,6 +150,7 @@ class Client
     private function prepareRequest()
     {
         // Request Cookies
+        $this->setRequestCookies();
 
         // Request Headers
         $this->setRequestHeaders();
@@ -161,7 +170,9 @@ class Client
     {
         $ch = $this->getHandle();
         curl_setopt_array($ch, $this->getOptions());
+        // print_r($this->getOptions());
         curl_exec($ch);
+        // print_r($this->getCurlInfo());
 
         $this->logger->info('Curl: '. $this->request->getUri());
 
@@ -198,6 +209,10 @@ class Client
             $response->headers->remove('Transfer-Encoding');
             $response->headers->set('Content-Length', strlen($response->getContent()));
         }
+        // Append any cookies sent with this Response to the cookie jar
+        $this->cookieJar->updateFromResponse($response, $this->getUri());
+
+        // Set the Response object
         $this->setResponse($response);
     }
 
@@ -228,6 +243,25 @@ class Client
     }
 
     /**
+     * Sets cURL cookie options for this request
+     *
+     * @return self
+     */
+    private function setRequestCookies()
+    {
+        $cookies = $this->request->cookies->all();
+        if (!empty($cookies)) {
+            $cookieString = array();
+            foreach ($cookies as $name => $value) {
+                $cookieString[] = urlencode($name) . '=' . urlencode($value);
+            }
+            $this->addOption(CURLOPT_COOKIE, implode('; ', $cookieString));
+        } else {
+            $this->addOption(CURLOPT_COOKIE, '');
+        } 
+    }
+
+    /**
      * Sets specific cURL options based on the request method
      *
      * @return self
@@ -238,6 +272,9 @@ class Client
         switch ($method) {
             case 'POST':
                 $this->setPostFields();
+                break;
+            case 'PUT':
+                $this->handlePutFile();
                 break;
             default:
                 break;
@@ -264,6 +301,35 @@ class Client
         return $this;
     }
 
+    /**
+     * Sets the PUT file information
+     *
+     * @throws Exception If unable to create the PUT file
+     * @return self
+     */
+    private function handlePutFile()
+    {
+        if ($this->request->files->count() > 0) {
+            // @todo Implement file handling
+            throw new \Exception('PUT file handling via Request->files not yet implemented.');
+        } else {
+            // Create temp file and put
+            $filename = time() . '_' . mt_rand();
+            $putFile = '/tmp/' . $filename . '.put';
+            $r = file_put_contents($putFile, $this->request->getContent());
+         
+            if ($r === false) {
+                throw new \Exception('Unable to write a put file. Tried: ' . $put_file);
+            }
+
+            $fp = fopen($putFile, "r");
+            $this->addOption(CURLOPT_INFILE, $fp);
+            $this->addOption(CURLOPT_INFILESIZE, filesize($putFile));
+            unlink($putFile);
+        }
+        return $this;
+    }
+
 
     /**
      * Sets the URI option for this cURL request
@@ -275,6 +341,27 @@ class Client
     {
         $this->addOption(CURLOPT_URL, $uri);
         return $this;
+    }
+
+    public function getUri()
+    {
+        return $this->getOption(CURLOPT_URL);
+    }
+
+    public function getHost()
+    {
+        if ((false === $uriParts = parse_url($this->getUri())) || !isset($uriParts['host'])) {
+            return null;
+        }
+        return $uriParts['host'];
+    }
+
+    public function getPath()
+    {
+        if ((false === $uriParts = parse_url($this->getUri())) || !isset($uriParts['path'])) {
+            return '/';
+        }
+        return $uriParts['path'];
     }
 
     /**
@@ -307,6 +394,23 @@ class Client
             return $this;
         } else {
             throw new \Exception(sprintf('Unsupported request method %s specified. Only %s methods are allowed', $method, implode(', ', array_keys($supported))));
+        }
+    }
+
+    /**
+     * Appends cookies from the cookie jar to the Request object
+     *
+     * @return self
+     */
+    public function appendCookieJarCookies()
+    {
+        // Get all non-expired cookies for this URI from the jar
+        $cookies = $this->cookieJar->allByUri($this->getUri());
+        foreach ($cookies as $cookie) {
+            // Append to the Request
+            $name = urlencode($cookie->getName());
+            $value = urlencode($cookie->getValue());
+            $this->request->cookies->set($name, $value);
         }
     }
 
@@ -360,6 +464,11 @@ class Client
         );
     }
 
+    /**
+     * Proxy for creating a new Cookie object and setting it
+     *
+     * @return Symfony\Component\HttpFoundation\Cookie
+     */
     public function createCookie($name, $value = null, $expire = 0, $path = '/', $domain = null, $secure = false, $httpOnly = true)
     {
         $cookie = new Cookie($name, $value, $expire, $path, $domain, $secure, $httpOnly);
@@ -367,9 +476,17 @@ class Client
         return $cookie;
     }
 
+
+    /**
+     * Sets a Cookie object to the cookie jar
+     *
+     * @param Symfony\Component\HttpFoundation\Cookie $cookie
+     * @return self
+     */
     public function setCookie(Cookie $cookie)
     {
         $this->cookieJar->set($cookie);
+        return $this;
     }
 
     /**
@@ -393,7 +510,7 @@ class Client
     {
         $defaults = array(
             CURLOPT_RETURNTRANSFER  => true,
-            // CURLINFO_HEADER_OUT     => true,
+            CURLINFO_HEADER_OUT     => true,
             CURLOPT_SSL_VERIFYHOST  => false,
             CURLOPT_HEADERFUNCTION  => array($this->headerProcessor, "process"),
             CURLOPT_WRITEFUNCTION   => array($this->bodyProcessor,   "process"),
@@ -402,10 +519,10 @@ class Client
     }
 
     /**
-    * Reset the CURL options for the request, except for cookies
-    *
-    * @return Curl_Client
-    */
+     * Reset the CURL options for the request, except for cookies
+     *
+     * @return self
+     */
     public function resetOptions()
     {
         $ch = $this->getHandle();
@@ -419,8 +536,11 @@ class Client
         // Reset request method
         curl_setopt($ch, CURLOPT_HTTPGET, true);
 
+        // Reset any body content and headers from previous requests
         $this->headerProcessor->reset();
         $this->bodyProcessor->reset();
+
+        $this->initDefaultOptions();
 
         return $this;
     }
@@ -440,7 +560,7 @@ class Client
      *
      * @param  const $option The CURL option constant
      * @param  mixed $value The option value
-     * @return Cygnus\CurlBundle\Curl\Client
+     * @return self
      */
     public function addOption($option, $value)
     {
@@ -453,7 +573,7 @@ class Client
      *
      * @param  const $option The CURL option constant
      * @param  mixed $value The option value
-     * @return Cygnus\CurlBundle\Curl\Client
+     * @return self
      */
     public function removeOption($option, $value)
     {
@@ -471,7 +591,7 @@ class Client
      */
     public function getOption($option)
     {
-        if (array_key_exists($option, $options)) {
+        if (array_key_exists($option, $this->options)) {
             return $this->options[$option];
         } else {
             return null;
@@ -492,7 +612,7 @@ class Client
      * Set CURL options for the request
      *
      * @param array The cURL options
-     * @return Cygnus\CurlBundle\Curl\Client
+     * @return self
      */
     public function setOptions(array $options)
     {
