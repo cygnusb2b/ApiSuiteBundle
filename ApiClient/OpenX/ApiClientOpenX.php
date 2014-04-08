@@ -45,16 +45,111 @@ class ApiClientOpenX extends ApiClientAbstract
         $this->setConfig($config);
     }
 
-    public function adGet($adId)
+    /**
+     * Account Resource: Find by ID
+     *
+     * @param  int $accountId
+     * @return Response
+     */
+    public function accountFindById($accountId)
+    {
+        $endpoint = '/account/' . $accountId;
+        return $this->handleRequest($endpoint);
+    }
+
+    /**
+     * Site Resource: Find by ID
+     *
+     * @param  int $siteId
+     * @return Response
+     */
+    public function siteFindById($siteId)
+    {
+        $endpoint = '/site/' . $siteId;
+        return $this->handleRequest($endpoint);
+    }
+
+    /**
+     * Ad Unit Resource: Find by ID
+     *
+     * @param  int $adUnitId
+     * @return Response
+     */
+    public function adUnitFindById($adUnitId)
+    {
+        $endpoint = '/adunit/' . $adUnitId;
+        return $this->handleRequest($endpoint);
+    }
+
+    /**
+     * Ad Unit Group Resource: Find by ID
+     *
+     * @param  int $adUnitGroupId
+     * @return Response
+     */
+    public function adUnitGroupFindById($adUnitGroupId)
+    {
+        $endpoint = '/adunitgroup/' . $adUnitGroupId;
+        return $this->handleRequest($endpoint);
+    }
+
+    /**
+     * Order Resource: Find by ID
+     *
+     * @param  int $orderId
+     * @return Response
+     */
+    public function orderFindById($orderId)
+    {
+        $endpoint = '/order' . $orderId;
+        return $this->handleRequest($endpoint);
+    }
+
+    /**
+     * Line Item Resource: Find by ID
+     *
+     * @param  int $lineItemId
+     * @return Response
+     */
+    public function lineItemFindById($lineItemId)
+    {
+        $endpoint = '/lineitem/' . $lineItemId;
+        return $this->handleRequest($endpoint);
+    }
+
+    /**
+     * Ad Resource: Find by ID
+     *
+     * @param  int $adId
+     * @return Response
+     */
+    public function adFindById($adId)
     {
         $endpoint = '/ad/' . $adId;
         return $this->handleRequest($endpoint);
     }
 
-    public function accountGet($accountId)
+    /**
+     * Creative Resource: Find by ID
+     *
+     * @param  int $creativeId
+     * @return Response
+     */
+    public function creativeFindById($creativeId)
     {
-        $endpoint = '/account';
+        $endpoint = '/creative/' . $creativeId;
         return $this->handleRequest($endpoint);
+    }
+
+    /**
+     * Report Resource: Run a report based on a specified code
+     *
+     * @param  int $creativeId
+     * @return Response
+     */
+    public function reportRun($reportCode, \DateTime $startDate = null, \DateTime $endDate = null, $format = 'json', array $params = array())
+    {
+        
     }
 
     /**
