@@ -101,7 +101,6 @@ class Client
         $this->request = $request;
         $this->setOptionsFromRequest();
         $this->appendCookieJarCookies();
-        // print_r($this->request);
         return $this;
     }
 
@@ -170,9 +169,7 @@ class Client
     {
         $ch = $this->getHandle();
         curl_setopt_array($ch, $this->getOptions());
-        // print_r($this->getOptions());
         curl_exec($ch);
-        // print_r($this->getCurlInfo());
 
         $this->logger->info('Curl: '. $this->request->getUri());
 
@@ -343,11 +340,21 @@ class Client
         return $this;
     }
 
+    /**
+     * Gets the URI option for this cURL request
+     *
+     * @return string
+     */
     public function getUri()
     {
         return $this->getOption(CURLOPT_URL);
     }
 
+    /**
+     * Gets the host based off the URI option for this cURL request
+     *
+     * @return string
+     */
     public function getHost()
     {
         if ((false === $uriParts = parse_url($this->getUri())) || !isset($uriParts['host'])) {
@@ -356,6 +363,11 @@ class Client
         return $uriParts['host'];
     }
 
+    /**
+     * Gets the path based off the URI option for this cURL request
+     *
+     * @return string
+     */
     public function getPath()
     {
         if ((false === $uriParts = parse_url($this->getUri())) || !isset($uriParts['path'])) {
