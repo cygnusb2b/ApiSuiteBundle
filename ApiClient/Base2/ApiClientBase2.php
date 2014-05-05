@@ -49,6 +49,21 @@ class ApiClientBase2 extends ApiClientAbstract
     }
 
     /**
+     * Performs a fields lookup for a content type
+     *
+     * @param  string $contentType The content type key to lookup, such as press_release
+     * @return Symfony\Component\HttpFoundation\Response
+     */
+    public function fieldsLookup($contentType)
+    {
+        $endpoint = '/field/content';
+        $parameters = array(
+            'content_type'   => strtolower($contentType),
+        );
+        return $this->handleRequest($endpoint, $parameters);
+    }
+
+    /**
      * Performs a channel lookup by channel type and pub
      *
      * @param  string $channelType The channel type, such as website
@@ -143,7 +158,7 @@ class ApiClientBase2 extends ApiClientAbstract
             } else {
                 throw new \Exception(sprintf('%s An unknown client-side error has occurred.', $baseError));
             }
-            
+
         } elseif ($response->isServerError()) {
             // Server error, throw generic exception
             throw new \Exception(sprintf('%s An unknown server-side error has occurred.', $baseError));
