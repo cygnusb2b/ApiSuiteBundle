@@ -52,13 +52,15 @@ class ApiClientBase2 extends ApiClientAbstract
      * Performs a fields lookup for a content type
      *
      * @param  string $contentType The content type key to lookup, such as press_release
+     * @param  string $pubgroup    The pubgroup, such as fcp
      * @return Symfony\Component\HttpFoundation\Response
      */
-    public function fieldsLookup($contentType)
+    public function fieldsLookup($contentType, $pubgroup)
     {
         $endpoint = '/field/content';
         $parameters = array(
-            'content_type'   => strtolower($contentType),
+            'content_type'  => strtolower($contentType),
+            'pubgroup'      => strtolower($pubgroup),
         );
         return $this->handleRequest($endpoint, $parameters);
     }
@@ -67,7 +69,7 @@ class ApiClientBase2 extends ApiClientAbstract
      * Performs a channel lookup by channel type and pub
      *
      * @param  string $channelType The channel type, such as website
-     * @param  string $pub         The publication, such as emsr
+     * @param  string $pub         The publication, such as et
      * @return Symfony\Component\HttpFoundation\Response
      */
     public function channelLookup($channelType, $pub)
@@ -84,16 +86,16 @@ class ApiClientBase2 extends ApiClientAbstract
      * Performs a vocab lookup by vocab key (e.g. fcp_categories) and pub
      *
      * @param  string $vocab        The vocab key
-     * @param  string $pub          The publication, such as emsr
+     * @param  string $pubgroup     The pubgroup, such as fcp
      * @param  bool   $includeTerms Whether to include all terms
      * @return Symfony\Component\HttpFoundation\Response
      */
-    public function vocabLookup($vocab, $pub, $terms = false)
+    public function vocabLookup($vocab, $pubgroup, $terms = false)
     {
         $endpoint = '/vocab';
         $parameters = array(
             'vocab'     => strtolower($vocab),
-            'pub'       => strtolower($pub),
+            'pubgroup'  => strtolower($pubgroup),
         );
         if ($terms === true) {
             $parameters['terms'] = true;
