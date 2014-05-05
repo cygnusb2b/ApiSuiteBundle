@@ -23,6 +23,8 @@ class ApiClientBase2 extends ApiClientAbstract
      */
     protected $requiredConfigOptions = ['host', 'user', 'key'];
 
+    protected $responseCache = array();
+
     /**
      * Constructor. Sets the configuration for this Omeda API client instance
      *
@@ -119,9 +121,19 @@ class ApiClientBase2 extends ApiClientAbstract
     protected function handleRequest($endpoint, array $parameters = array(), $method = 'GET')
     {
         $request = $this->createRequest($endpoint, $parameters, $method);
+
+        $cacheKey = $request->getRequestUri();
+
+        if (array_key_exists($cacheKey, $this->responseCache)) {
+            // Pull the parsed response from cache
+            return $this->responseCache[$cacheKey];
+        }
+
+        // Get the API response object
         $response = $this->doRequest($request);
 
         $baseError = sprintf('Unable to complete API request "%s" with errors:', $request->getRequestUri());
+        
         if ($response->isClientError()) {
             // Client error, parse response and throw exception
             $content = @json_decode($response->getContent(), true);
@@ -131,12 +143,14 @@ class ApiClientBase2 extends ApiClientAbstract
             } else {
                 throw new \Exception(sprintf('%s An unknown client-side error has occurred.', $baseError));
             }
+            
         } elseif ($response->isServerError()) {
             // Server error, throw generic exception
             throw new \Exception(sprintf('%s An unknown server-side error has occurred.', $baseError));
         } elseif ($response->isSuccessful()) {
-            // Ok. Parse JSON resposne and return
-            return @json_decode($response->getContent(), true);
+            // Ok. Parse JSON response, cache and return
+            $this->responseCache[$cacheKey] = @json_decode($response->getContent(), true);
+            return $this->responseCache[$cacheKey];
         }
     }
 
