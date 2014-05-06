@@ -23,8 +23,6 @@ class ApiClientBase2 extends ApiClientAbstract
      */
     protected $requiredConfigOptions = ['host', 'user', 'key'];
 
-    protected $responseCache = array();
-
     /**
      * Constructor. Sets the configuration for this Omeda API client instance
      *
@@ -95,7 +93,7 @@ class ApiClientBase2 extends ApiClientAbstract
         $endpoint = '/vocab';
         $parameters = array(
             'vocab'     => strtolower($vocab),
-            'pubgroup'  => strtolower($pubgroup),
+            'pub'       => strtolower($pubgroup),
         );
         if ($terms === true) {
             $parameters['terms'] = true;
@@ -124,7 +122,12 @@ class ApiClientBase2 extends ApiClientAbstract
         $parameters = array(
             'term_vocab_id' => implode(',', $termVocabIds)
         );
-        return $this->handleRequest($endpoint, $parameters);
+        $response = $this->handleRequest($endpoint, $parameters);
+
+        if (!is_array($response) || !isset($response['term_vocab']) || empty($response['term_vocab'])) {
+            throw new \Exception(sprintf('A successful term vocab response was received, but is missing data. The term vocab likely doesn\'t exist. Tried id %s', implode(',', $termVocabIds)));
+        }
+        return $response;
     }
 
     /**
@@ -140,11 +143,6 @@ class ApiClientBase2 extends ApiClientAbstract
         $request = $this->createRequest($endpoint, $parameters, $method);
 
         $cacheKey = $request->getRequestUri();
-
-        if (array_key_exists($cacheKey, $this->responseCache)) {
-            // Pull the parsed response from cache
-            return $this->responseCache[$cacheKey];
-        }
 
         // Get the API response object
         $response = $this->doRequest($request);
@@ -166,8 +164,7 @@ class ApiClientBase2 extends ApiClientAbstract
             throw new \Exception(sprintf('%s An unknown server-side error has occurred.', $baseError));
         } elseif ($response->isSuccessful()) {
             // Ok. Parse JSON response, cache and return
-            $this->responseCache[$cacheKey] = @json_decode($response->getContent(), true);
-            return $this->responseCache[$cacheKey];
+            return @json_decode($response->getContent(), true);
         }
     }
 
