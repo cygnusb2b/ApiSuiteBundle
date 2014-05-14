@@ -4,10 +4,13 @@ namespace Cygnus\ApiSuiteBundle\ApiClient\Base2;
 use Cygnus\ApiSuiteBundle\ApiClient\ApiClientAbstract;
 use Cygnus\ApiSuiteBundle\RemoteKernel\RemoteKernelInterface;
 use Symfony\Component\HttpFoundation\Cookie;
+use Snc\RedisBundle\Client\Phpredis\Client as CacheClient;
 
 class ApiClientBase2 extends ApiClientAbstract
 {
     const BASE_ENDPOINT = 'api/v2';
+
+    protected $cacheClient;
 
     /**
      * An array of request methods that this API supports
@@ -34,6 +37,11 @@ class ApiClientBase2 extends ApiClientAbstract
         $this->setConfig($config);
     }
 
+    public function setCacheClient(CacheClient $cacheClient)
+    {
+        $this->cacheClient = $cacheClient;
+    }
+
     /**
      * Performs a Content lookup by ID
      *
@@ -44,6 +52,29 @@ class ApiClientBase2 extends ApiClientAbstract
     {
         $endpoint = sprintf('/content/%s', $contentId);
         $response = $this->handleRequest($endpoint);
+
+        if (!is_array($response) || !isset($response['content']) || empty($response['content'])) {
+            throw new \Exception(sprintf('A successful content response was received, but is missing data. The content likely doesn\'t exist. Tried id %s', $contentId));
+        }
+        return $response;
+    }
+
+    public function contentLookupByRange($pubgroup, $startingId = 0, $limit = 10)
+    {
+        $endpoint = '/content';
+        $parameters = [
+            'pubgroup'  => strtolower($pubgroup),
+            'start'     => (int) $startingId,
+            'count'     => (int) $limit,
+            'base3'     => true,
+        ];
+
+        $response = $this->handleRequest($endpoint, $parameters);
+        
+        if (!is_array($response) || !isset($response['content']) || empty($response['content'])) {
+            throw new \Exception(sprintf('A successful content response was received, but is missing data. The content likely doesn\'t exist. Tried id %s', $contentId));
+        }
+        return $response;
     }
 
     /**
@@ -64,13 +95,121 @@ class ApiClientBase2 extends ApiClientAbstract
     }
 
     /**
+     * Performs a single publication lookup by id
+     *
+     * @param  mixed $pubId The publication ids, as a single id, an array of ids, or a comma seperated list
+     * @return Symfony\Component\HttpFoundation\Response
+     */
+    public function pubLookupById($pubId)
+    {
+        $endpoint = '/pub';
+
+        if (is_string($pubId)) {
+            $pubIds = explode(',', $pubId);
+        } elseif (is_array($pubId)) {
+            $pubIds = $pubId;
+        } else {
+            $pubIds = (array) $pubId;
+        }
+
+        $response = $this->handleRequest($endpoint);
+
+        if (!is_array($response) || !isset($response['pub']) || empty($response['pub'])) {
+            throw new \Exception(sprintf('A successful pub response was received, but is missing data. The pub ids likely do not exist. Tried id %s', implode(',', $pubIds)));
+        }
+
+        $found = [];
+        foreach ($response['pub'] as $pubKey => $publication) {
+            $pubId = $publication['pub_id'];
+            if (in_array($pubId, $pubIds)) {
+                $found[$pubId] = $publication;
+            }
+        }
+        return $found;
+    }
+
+    /**
+     * Performs a single publication lookup by pub code
+     *
+     * @param  string $pubCode The publication code, such as fcp or rpn
+     * @return Symfony\Component\HttpFoundation\Response
+     */
+    public function pubLookupByPub($pubCode)
+    {
+        $endpoint = '/pub';
+        $parameters = array(
+            'pub'       => strtolower($pubCode),
+        );
+        return $this->handleRequest($endpoint, $parameters);
+    }
+
+    /**
+     * Performs a multiple publication lookup by a pubgroup code
+     *
+     * @param  string $pubgroup The publication code, such as fcp emsr
+     * @return Symfony\Component\HttpFoundation\Response
+     */
+    public function pubLookupByPubGroup($pubgroup)
+    {
+        $endpoint = '/pub';
+        $parameters = array(
+            'pubgroup'       => strtolower($pubgroup),
+        );
+
+        $response = $this->handleRequest($endpoint, $parameters);
+
+        if (!is_array($response) || !isset($response['pub']) || empty($response['pub'])) {
+            throw new \Exception(sprintf('A successful pub response was received, but is missing data. The pubgroup likely doesn\'t exist. Tried id "%s"', $pubgroup));
+        }
+        return $response;
+    }
+
+    /**
+     * Performs a channel lookup by channel id and pub
+     *
+     * @param  string $channelId   The channel id
+     * @param  string $pub         The publication, such as et
+     * @return Symfony\Component\HttpFoundation\Response
+     */
+    public function channelLookupById($channelId, $pub)
+    {
+        $endpoint = '/channel';
+        $parameters = array(
+            'channel_id'    => $channelId,
+            'pub'           => strtolower($pub),
+        );
+
+        $response = $this->handleRequest($endpoint, $parameters);
+
+        if (!is_array($response) || !isset($response['channel']) || !isset($response['channel'][strtoupper($pub)]) || isset($response['channel'][strtoupper($pub)][''])) {
+            throw new \Exception(sprintf('A successful channel response was received, but is missing data. The channel likely doesn\'t exist. Tried id %s', $channelId));
+        }
+        return $response;
+    }
+
+    /**
+     * Performs a channel lookup by pub
+     *
+     * @param  string $pub         The publication, such as fcp
+     * @return Symfony\Component\HttpFoundation\Response
+     */
+    public function channelLookupByPub($pub)
+    {
+        $endpoint = '/channel';
+        $parameters = array(
+            'pub'           => strtolower($pub),
+        );
+        return $this->handleRequest($endpoint, $parameters);
+    }
+
+    /**
      * Performs a channel lookup by channel type and pub
      *
      * @param  string $channelType The channel type, such as website
      * @param  string $pub         The publication, such as et
      * @return Symfony\Component\HttpFoundation\Response
      */
-    public function channelLookup($channelType, $pub)
+    public function channelLookupByType($channelType, $pub)
     {
         $endpoint = '/channel';
         $parameters = array(
@@ -142,7 +281,11 @@ class ApiClientBase2 extends ApiClientAbstract
     {
         $request = $this->createRequest($endpoint, $parameters, $method);
 
-        $cacheKey = $request->getRequestUri();
+        $cacheKey = sprintf('apiClient:base2:%s', md5($request->getRequestUri()));
+
+        if ($this->cacheClient->exists($cacheKey)) {
+            return unserialize($this->cacheClient->get($cacheKey));
+        }
 
         // Get the API response object
         $response = $this->doRequest($request);
@@ -164,7 +307,9 @@ class ApiClientBase2 extends ApiClientAbstract
             throw new \Exception(sprintf('%s An unknown server-side error has occurred.', $baseError));
         } elseif ($response->isSuccessful()) {
             // Ok. Parse JSON response, cache and return
-            return @json_decode($response->getContent(), true);
+            $parsedResponse = @json_decode($response->getContent(), true);
+            $this->cacheClient->set($cacheKey, serialize($parsedResponse));
+            return $parsedResponse;
         }
     }
 
