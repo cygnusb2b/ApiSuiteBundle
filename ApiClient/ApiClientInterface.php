@@ -1,10 +1,9 @@
 <?php
 namespace Cygnus\ApiSuiteBundle\ApiClient;
 
-use 
-    Cygnus\ApiSuiteBundle\RemoteKernel\RemoteKernelInterface,
-    Symfony\Component\HttpFoundation\Request,
-    Symfony\Component\HttpFoundation\Response;
+use Cygnus\ApiSuiteBundle\RemoteKernel\RemoteKernelInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 interface ApiClientInterface
 {

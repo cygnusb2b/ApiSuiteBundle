@@ -2,15 +2,16 @@
 namespace Cygnus\ApiSuiteBundle\ApiClient\Base2;
 
 use Cygnus\ApiSuiteBundle\ApiClient\ApiClientAbstract;
+use Cygnus\ApiSuiteBundle\ApiClient\CacheableInterface;
 use Cygnus\ApiSuiteBundle\RemoteKernel\RemoteKernelInterface;
 use Symfony\Component\HttpFoundation\Cookie;
-use Snc\RedisBundle\Client\Phpredis\Client as CacheClient;
+use Cygnus\ApiSuiteBundle\Traits\CacheTraitRedis;
 
-class ApiClientBase2 extends ApiClientAbstract
+class ApiClientBase2 extends ApiClientAbstract implements CacheableInterface
 {
-    const BASE_ENDPOINT = 'api/v2';
+    use CacheTraitRedis;
 
-    protected $cacheClient;
+    const BASE_ENDPOINT = 'api/v2';
 
     /**
      * An array of request methods that this API supports
@@ -35,11 +36,6 @@ class ApiClientBase2 extends ApiClientAbstract
     public function __construct(array $config = array())
     {
         $this->setConfig($config);
-    }
-
-    public function setCacheClient(CacheClient $cacheClient)
-    {
-        $this->cacheClient = $cacheClient;
     }
 
     /**
@@ -281,10 +277,12 @@ class ApiClientBase2 extends ApiClientAbstract
     {
         $request = $this->createRequest($endpoint, $parameters, $method);
 
-        $cacheKey = sprintf('apiClient:base2:%s', md5($request->getRequestUri()));
-
-        if ($this->cacheClient->exists($cacheKey)) {
-            return unserialize($this->cacheClient->get($cacheKey));
+        // Generate Cache Key
+        $cacheKey = $this->generateCacheKey($request);
+        
+        if (!is_null($parsedResponse = $this->getCache($cacheKey))) {
+            // Parsed response found in cache. Return it.
+            return $parsedResponse;
         }
 
         // Get the API response object
@@ -308,7 +306,7 @@ class ApiClientBase2 extends ApiClientAbstract
         } elseif ($response->isSuccessful()) {
             // Ok. Parse JSON response, cache and return
             $parsedResponse = @json_decode($response->getContent(), true);
-            $this->cacheClient->set($cacheKey, serialize($parsedResponse));
+            $this->setCache($cacheKey, $parsedResponse);
             return $parsedResponse;
         }
     }
