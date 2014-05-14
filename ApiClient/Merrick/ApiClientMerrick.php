@@ -2,15 +2,16 @@
 namespace Cygnus\ApiSuiteBundle\ApiClient\Merrick;
 
 use Cygnus\ApiSuiteBundle\ApiClient\ApiClientAbstract;
+use Cygnus\ApiSuiteBundle\ApiClient\CacheableInterface;
 use Cygnus\ApiSuiteBundle\RemoteKernel\RemoteKernelInterface;
 use Symfony\Component\HttpFoundation\Cookie;
-use Snc\RedisBundle\Client\Phpredis\Client as CacheClient;
+use Cygnus\ApiSuiteBundle\Traits\CacheTraitRedis;
 
-class ApiClientMerrick extends ApiClientAbstract
+class ApiClientMerrick extends ApiClientAbstract implements CacheableInterface
 {
-    const BASE_ENDPOINT = 'api';
+    use CacheTraitRedis;
 
-    protected $cacheClient;
+    const BASE_ENDPOINT = 'api';
 
     /**
      * An array of request methods that this API supports
@@ -35,11 +36,6 @@ class ApiClientMerrick extends ApiClientAbstract
     public function __construct(array $config = array())
     {
         $this->setConfig($config);
-    }
-
-    public function setCacheClient(CacheClient $cacheClient)
-    {
-        $this->cacheClient = $cacheClient;
     }
    
     /**
@@ -94,10 +90,12 @@ class ApiClientMerrick extends ApiClientAbstract
     {
         $request = $this->createRequest($endpoint, $parameters, $method);
 
-        $cacheKey = sprintf('apiClient:merrick:%s', md5($request->getRequestUri()));
-
-        if ($this->cacheClient->exists($cacheKey)) {
-            return unserialize($this->cacheClient->get($cacheKey));
+        // Generate Cache Key
+        $cacheKey = $this->generateCacheKey($request);
+        
+        if (!is_null($parsedResponse = $this->getCache($cacheKey))) {
+            // Parsed response found in cache. Return it.
+            return $parsedResponse;
         }
 
         // Get the API response object
@@ -121,7 +119,7 @@ class ApiClientMerrick extends ApiClientAbstract
         } elseif ($response->isSuccessful()) {
             // Ok. Parse JSON response, cache and return
             $parsedResponse = @json_decode($response->getContent(), true);
-            $this->cacheClient->set($cacheKey, serialize($parsedResponse));
+            $this->setCache($cacheKey, $parsedResponse);
             return $parsedResponse;
         }
     }
@@ -145,16 +143,11 @@ class ApiClientMerrick extends ApiClientAbstract
                 // Request method not allowed by the API
                 throw new \Exception(sprintf('The request method %s is not allowed. Only %s methods are supported.'), $method, implode(', ', $this->supportedMethods));
             }
-
-            // Dev access parameter
-            $parameters['da'] = 'aba8787161b82fe2cbe566582ed505b1';
-
             // Create initial request object
             $request = $this->httpKernel->createSimpleRequest($this->getUri($endpoint), $method, $parameters);
 
-            // echo '<pre>';
-            // var_dump($request);
-            // die();
+            // Set the dev access cookie
+            $request->cookies->set('da', 'aba8787161b82fe2cbe566582ed505b1');
 
             return $request;
         } else {
