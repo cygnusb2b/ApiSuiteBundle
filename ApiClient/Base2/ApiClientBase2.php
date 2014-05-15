@@ -44,10 +44,25 @@ class ApiClientBase2 extends ApiClientAbstract implements CacheableInterface
      * @param  string|int $contentId The content id to lookup
      * @return Symfony\Component\HttpFoundation\Response
      */
-    public function contentLookup($contentId)
+    public function contentLookup($contentIds)
     {
-        $endpoint = sprintf('/content/%s', $contentId);
-        $response = $this->handleRequest($endpoint);
+        $parameters = [];
+
+        if (is_array($contentIds)) {
+            $endpoint = '/content';
+
+            if (count($contentIds) == 1) {
+                $endpoint .= sprintf('/%s', $contentIds[0]);
+            } else {
+                $parameters = [
+                    'content_id'    => implode('|', $contentIds),
+                ];
+            }
+        } else {
+            $endpoint = sprintf('/content/%s', $contentIds);
+        }
+
+        $response = $this->handleRequest($endpoint, $parameters);
 
         if (!is_array($response) || !isset($response['content']) || empty($response['content'])) {
             throw new \Exception(sprintf('A successful content response was received, but is missing data. The content likely doesn\'t exist. Tried id %s', $contentId));
