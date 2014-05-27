@@ -37,7 +37,7 @@ class ApiClientMerrick extends ApiClientAbstract implements CacheableInterface
     {
         $this->setConfig($config);
     }
-   
+
     /**
      * Performs a channel lookup by channel id and pub
      *
@@ -46,8 +46,11 @@ class ApiClientMerrick extends ApiClientAbstract implements CacheableInterface
      */
     public function channelLookupById($channelId)
     {
-        $endpoint = '/channel/' . $channelId;
-        return $this->handleRequest($endpoint);
+        $endpoint = '/channel';
+        $parameters = [
+            'channel_id' => implode('|', $channelId)
+        ];
+        return $this->handleRequest($endpoint, $parameters);
     }
 
     /**
@@ -58,8 +61,11 @@ class ApiClientMerrick extends ApiClientAbstract implements CacheableInterface
      */
     public function sectionLookupById($sectionId)
     {
-        $endpoint = '/section/' . $sectionId;
-        return $this->handleRequest($endpoint);
+        $endpoint = '/section';
+        $parameters = [
+            'section_id' => implode('|', $sectionId)
+        ];
+        return $this->handleRequest($endpoint, $parameters);
     }
 
     /**
@@ -77,7 +83,7 @@ class ApiClientMerrick extends ApiClientAbstract implements CacheableInterface
         return $this->handleRequest($endpoint, $parameters);
     }
 
-  
+
     /**
      * Handles a request by creating a Request object and sending it to the Kernel
      *
@@ -92,7 +98,7 @@ class ApiClientMerrick extends ApiClientAbstract implements CacheableInterface
 
         // Generate Cache Key
         $cacheKey = $this->generateCacheKey($request);
-        
+
         if (!is_null($parsedResponse = $this->getCache($cacheKey))) {
             // Parsed response found in cache. Return it.
             return $parsedResponse;
@@ -102,7 +108,7 @@ class ApiClientMerrick extends ApiClientAbstract implements CacheableInterface
         $response = $this->doRequest($request);
 
         $baseError = sprintf('Unable to complete API request "%s" with errors:', $request->getRequestUri());
-        
+
         if ($response->isClientError()) {
             // Client error, parse response and throw exception
             $content = @json_decode($response->getContent(), true);

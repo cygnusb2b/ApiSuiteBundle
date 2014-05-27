@@ -81,7 +81,7 @@ class ApiClientBase2 extends ApiClientAbstract implements CacheableInterface
         ];
 
         $response = $this->handleRequest($endpoint, $parameters);
-        
+
         if (!is_array($response) || !isset($response['content']) || empty($response['content'])) {
             throw new \Exception(sprintf('A successful content response was received, but is missing data. The content likely doesn\'t exist. Tried id %s', $contentId));
         }
@@ -294,7 +294,7 @@ class ApiClientBase2 extends ApiClientAbstract implements CacheableInterface
 
         // Generate Cache Key
         $cacheKey = $this->generateCacheKey($request);
-        
+
         if (!is_null($parsedResponse = $this->getCache($cacheKey))) {
             // Parsed response found in cache. Return it.
             return $parsedResponse;
@@ -304,7 +304,7 @@ class ApiClientBase2 extends ApiClientAbstract implements CacheableInterface
         $response = $this->doRequest($request);
 
         $baseError = sprintf('Unable to complete API request "%s" with errors:', $request->getRequestUri());
-        
+
         if ($response->isClientError()) {
             // Client error, parse response and throw exception
             $content = @json_decode($response->getContent(), true);
