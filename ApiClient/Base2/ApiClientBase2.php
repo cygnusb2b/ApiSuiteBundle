@@ -65,7 +65,7 @@ class ApiClientBase2 extends ApiClientAbstract implements CacheableInterface
         $response = $this->handleRequest($endpoint, $parameters);
 
         if (!is_array($response) || !isset($response['content']) || empty($response['content'])) {
-            throw new \Exception(sprintf('A successful content response was received, but is missing data. The content likely doesn\'t exist. Tried id %s', $contentId));
+            throw new \Exception(sprintf('A successful content response was received, but is missing data. The content likely doesn\'t exist. Tried id %s', $contentIds));
         }
         return $response;
     }
@@ -83,7 +83,7 @@ class ApiClientBase2 extends ApiClientAbstract implements CacheableInterface
         $response = $this->handleRequest($endpoint, $parameters);
 
         if (!is_array($response) || !isset($response['content']) || empty($response['content'])) {
-            throw new \Exception(sprintf('A successful content response was received, but is missing data. The content likely doesn\'t exist. Tried id %s', $contentId));
+            throw new \Exception(sprintf('A successful content response was received, but is missing data. The content likely doesn\'t exist. Tried id %s', $startingId));
         }
         return $response;
     }
