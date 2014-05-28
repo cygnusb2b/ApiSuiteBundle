@@ -1,7 +1,7 @@
 <?php
 namespace Cygnus\ApiSuiteBundle\Traits;
 
-use Snc\RedisBundle\Client\Phpredis\Client as CacheClient;
+// use Snc\RedisBundle\Client\Phpredis\Client as CacheClient;
 use Symfony\Component\HttpFoundation\Request;
 
 trait CacheTraitRedis
@@ -19,7 +19,7 @@ trait CacheTraitRedis
      * @param  Snc\RedisBundle\Client\Phpredis\Client $cacheClient
      * @return self
      */
-    public function setCacheClient(CacheClient $cacheClient)
+    public function setCacheClient($cacheClient)
     {
         $this->cacheClient = $cacheClient;
         return $this;
@@ -34,8 +34,8 @@ trait CacheTraitRedis
     public function generateCacheKey(Request $request)
     {
         $key = sprintf(
-            '%s:%s:%s:%s', 
-            basename(strtr(get_class($this), '\\', '/')), 
+            '%s:%s:%s:%s',
+            basename(strtr(get_class($this), '\\', '/')),
             $request->getHost(),
             $request->getMethod(),
             $request->getPathInfo()
