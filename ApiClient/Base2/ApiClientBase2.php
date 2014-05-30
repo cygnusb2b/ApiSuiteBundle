@@ -106,6 +106,28 @@ class ApiClientBase2 extends ApiClientAbstract implements CacheableInterface
     }
 
     /**
+     * Performs a single field lookup by Id
+     *
+     * @param int $fieldId The legacy field ID to look up.
+     */
+    public function fieldLookup($fieldId)
+    {
+        $endpoint = sprintf("/field/%s", $fieldId);
+        return $this->handleRequest($endpoint);
+    }
+
+    /**
+     * Performs a single field_rel lookup by Id
+     *
+     * @param int $fieldRelId The legacy field_rel ID to look up.
+     */
+    public function fieldRelLookup($fieldRelId)
+    {
+        $endpoint = sprintf("/field_rel/%s", $fieldRelId);
+        return $this->handleRequest($endpoint);
+    }
+
+    /**
      * Performs a single publication lookup by id
      *
      * @param  mixed $pubId The publication ids, as a single id, an array of ids, or a comma seperated list
