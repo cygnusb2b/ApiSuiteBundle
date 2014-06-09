@@ -322,30 +322,33 @@ class ApiClientBase2 extends ApiClientAbstract implements CacheableInterface
             return $parsedResponse;
         }
 
-        // Get the API response object
-        $response = $this->doRequest($request);
+        return $this->retry(function() use($request, $cacheKey) {
 
-        $baseError = sprintf('Unable to complete API request "%s" with errors:', $request->getRequestUri());
+            // Get the API response object
+            $response = $this->doRequest($request);
 
-        if ($response->isClientError()) {
-            // Client error, parse response and throw exception
-            $content = @json_decode($response->getContent(), true);
+            $baseError = sprintf('Unable to complete API request "%s" with errors:', $request->getRequestUri());
 
-            if (is_array($content) && array_key_exists('errors', $content)) {
-                throw new \Exception(sprintf('%s %s', $baseError, implode(', ', $content['errors'])));
-            } else {
-                throw new \Exception(sprintf('%s An unknown client-side error has occurred.', $baseError));
+            if ($response->isClientError()) {
+                // Client error, parse response and throw exception
+                $content = @json_decode($response->getContent(), true);
+
+                if (is_array($content) && array_key_exists('errors', $content)) {
+                    throw new \Exception(sprintf('%s %s', $baseError, implode(', ', $content['errors'])));
+                } else {
+                    throw new \Exception(sprintf('%s An unknown client-side error has occurred.', $baseError));
+                }
+
+            } elseif ($response->isServerError()) {
+                // Server error, throw generic exception
+                throw new \Exception(sprintf('%s An unknown server-side error has occurred.', $baseError));
+            } elseif ($response->isSuccessful()) {
+                // Ok. Parse JSON response, cache and return
+                $parsedResponse = @json_decode($response->getContent(), true);
+                $this->setCache($cacheKey, $parsedResponse);
+                return $parsedResponse;
             }
-
-        } elseif ($response->isServerError()) {
-            // Server error, throw generic exception
-            throw new \Exception(sprintf('%s An unknown server-side error has occurred.', $baseError));
-        } elseif ($response->isSuccessful()) {
-            // Ok. Parse JSON response, cache and return
-            $parsedResponse = @json_decode($response->getContent(), true);
-            $this->setCache($cacheKey, $parsedResponse);
-            return $parsedResponse;
-        }
+        });
     }
 
     /**

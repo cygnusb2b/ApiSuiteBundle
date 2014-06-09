@@ -1,11 +1,10 @@
 <?php
 namespace Cygnus\ApiSuiteBundle\ApiClient;
 
-use 
-    Cygnus\ApiSuiteBundle\ApiClient\ApiClientInterface,
-    Cygnus\ApiSuiteBundle\RemoteKernel\RemoteKernelInterface,
-    Symfony\Component\HttpFoundation\ParameterBag,
-    Symfony\Component\HttpFoundation\Request;
+use Cygnus\ApiSuiteBundle\ApiClient\ApiClientInterface;
+use Cygnus\ApiSuiteBundle\RemoteKernel\RemoteKernelInterface;
+use Symfony\Component\HttpFoundation\ParameterBag;
+use Symfony\Component\HttpFoundation\Request;
 
 abstract class ApiClientAbstract implements ApiClientInterface
 {
@@ -31,6 +30,37 @@ abstract class ApiClientAbstract implements ApiClientInterface
     protected $requiredConfigOptions = array();
 
     /**
+     * The number of times to retry an action
+     * @var int
+     */
+    protected $retryLimit = 3;
+
+    /**
+     * Runs a closure multiple times
+     * @param  Closure $retry the closure to retry
+     * @return Closure result
+     * @throws Exception Closure exception
+     */
+    protected function retry(\Closure $retry)
+    {
+        $firstException = null;
+        for ($i = 0; $i <= $this->retryLimit; $i++) {
+            try {
+                return $retry();
+            } catch (\Exception $e) {
+                if (!$firstException) {
+                    $firstException = $e;
+                }
+                if ($i === $this->retryLimit) {
+                    throw $firstException;
+                }
+            }
+        }
+
+        throw $e;
+    }
+
+    /**
      * Sets the remote RemoteKernelInterface for sending Request objects and returning Response objects
      *
      * @param  Cygnus\ApiSuiteBundle\RemoteKernel\RemoteKernelInterface $httpKernel
@@ -47,7 +77,7 @@ abstract class ApiClientAbstract implements ApiClientInterface
      * @param  array $config The config options
      * @return self
      */
-    public function setConfig(array $config) 
+    public function setConfig(array $config)
     {
         $this->config = new ParameterBag($config);
         return $this;
