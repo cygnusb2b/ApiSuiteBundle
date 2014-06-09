@@ -9,9 +9,16 @@ trait CacheTraitRedis
     /**
      * The Redis cache client
      *
-     * @var  Snc\RedisBundle\Client\Phpredis\Client $cacheClient
+     * @var Snc\RedisBundle\Client\Phpredis\Client $cacheClient
      */
     protected $cacheClient;
+
+    /**
+     * Sets whether the cache engine is enabled. True by default
+     *
+     * @var bool
+     */
+    protected $cacheEnabled = true;
 
     /**
      * Sets the Redis cache client
@@ -55,6 +62,10 @@ trait CacheTraitRedis
      */
     public function hasCache($cacheKey)
     {
+        if (!$this->isCacheEnabled()) {
+            // Cache disabled, do nothing
+            return false;
+        }
         return $this->cacheClient->exists($cacheKey);
     }
 
@@ -66,6 +77,10 @@ trait CacheTraitRedis
      */
     public function getCache($cacheKey)
     {
+        if (!$this->isCacheEnabled()) {
+            // Cache disabled, do nothing
+            return null;
+        }
         if ($this->hasCache($cacheKey)) {
             $value = $this->cacheClient->get($cacheKey);
             return is_numeric($value) ? $value : unserialize($value);
@@ -83,14 +98,51 @@ trait CacheTraitRedis
      */
     public function setCache($cacheKey, $value, $expire = 0)
     {
+        if (!$this->isCacheEnabled()) {
+            // Cache disabled, do nothing
+            return $this;
+        }
+
         $expire = (int) $expire;
         $value = is_numeric($value) ? $value : serialize($value);
         $this->cacheClient->set($cacheKey, $value);
 
         if ($expire > 0) {
             // Add the expiration
-            $this->cacheClient->expire($expire);
+            $this->cacheClient->expire($cacheKey, $expire);
         }
         return $this;
+    }
+
+    /**
+     * Enables caching
+     *
+     * @return self
+     */
+    public function enableCache()
+    {
+        $this->cacheEnabled = true;
+        return $this;
+    }
+
+    /**
+     * Disables caching
+     *
+     * @return self
+     */
+    public function disableCache()
+    {
+        $this->cacheEnabled = false;
+        return $this;
+    }
+
+    /**
+     * Determines if cache is enabled
+     *
+     * @return bool
+     */
+    public function isCacheEnabled()
+    {
+        return $this->cacheEnabled;
     }
 }

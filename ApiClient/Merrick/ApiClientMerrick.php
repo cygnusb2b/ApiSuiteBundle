@@ -44,13 +44,23 @@ class ApiClientMerrick extends ApiClientAbstract implements CacheableInterface
      * @param  string $channelId   The channel id
      * @return Symfony\Component\HttpFoundation\Response
      */
-    public function channelLookupById($channelId)
+    public function channelLookupById($channelIds)
     {
         $endpoint = '/channel';
-        $parameters = [
-            'channel_id' => implode('|', $channelId)
-        ];
-        return $this->handleRequest($endpoint, $parameters);
+        $parameters = [];
+        if (is_array($channelIds)) {
+            $parameters = [
+                'channel_id'    => implode('|', $channelIds),
+            ];
+        } else {
+            $endpoint .= sprintf('/%s', $channelIds);
+        }
+        $response = $this->handleRequest($endpoint, $parameters);
+        if (!is_array($channelIds) || count($channelIds) == 1) {
+            $channelId = is_array($channelIds) ? reset($channelIds) : $channelIds;
+            $response = ['status' => $response['status'], 'channel' => [$channelId => $response['channel']]];
+        }
+        return $response;
     }
 
     /**
@@ -59,13 +69,19 @@ class ApiClientMerrick extends ApiClientAbstract implements CacheableInterface
      * @param  string $sectionId   The section id
      * @return Symfony\Component\HttpFoundation\Response
      */
-    public function sectionLookupById($sectionId)
+    public function sectionLookupById($sectionIds)
     {
         $endpoint = '/section';
-        $parameters = [
-            'section_id' => implode('|', $sectionId)
-        ];
-        return $this->handleRequest($endpoint, $parameters);
+        $parameters = [];
+        if (is_array($sectionIds)) {
+            $parameters = [
+                'section_id'    => implode('|', $sectionIds),
+            ];
+        } else {
+            $endpoint .= sprintf('/%s', $sectionIds);
+        }
+        $response = $this->handleRequest($endpoint, $parameters);
+        return $response;
     }
 
     /**
