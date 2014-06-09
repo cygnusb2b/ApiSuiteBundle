@@ -322,6 +322,11 @@ class ApiClientBase2 extends ApiClientAbstract implements CacheableInterface
             return $parsedResponse;
         }
 
+        // Only perform retries for non-modifying methods
+        $retryLimit = (in_array($method, array('GET', 'OPTIONS', 'HEAD')))
+            ? 3
+            : 0;
+
         return $this->retry(function() use($request, $cacheKey) {
 
             // Get the API response object
@@ -348,7 +353,7 @@ class ApiClientBase2 extends ApiClientAbstract implements CacheableInterface
                 $this->setCache($cacheKey, $parsedResponse);
                 return $parsedResponse;
             }
-        });
+        }, $retryLimit);
     }
 
     /**

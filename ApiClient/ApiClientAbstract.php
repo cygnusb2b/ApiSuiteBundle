@@ -30,28 +30,25 @@ abstract class ApiClientAbstract implements ApiClientInterface
     protected $requiredConfigOptions = array();
 
     /**
-     * The number of times to retry an action
-     * @var int
-     */
-    protected $retryLimit = 3;
-
-    /**
      * Runs a closure multiple times
-     * @param  Closure $retry the closure to retry
-     * @return Closure result
-     * @throws Exception Closure exception
+     *
+     * @param  Closure   $retry      The closure to retry
+     * @param  int       $retryLimit The number of times to retry the closure
+     *
+     * @return Closure   Closure's result
+     * @throws Exception Closure's exception
      */
-    protected function retry(\Closure $retry)
+    protected function retry(\Closure $retry, $retryLimit = 0)
     {
         $firstException = null;
-        for ($i = 0; $i <= $this->retryLimit; $i++) {
+        for ($i = 0; $i <= $retryLimit; $i++) {
             try {
                 return $retry();
             } catch (\Exception $e) {
                 if (!$firstException) {
                     $firstException = $e;
                 }
-                if ($i === $this->retryLimit) {
+                if ($i === $retryLimit) {
                     throw $firstException;
                 }
             }
