@@ -110,4 +110,15 @@ class ApiClientBrightcove extends ApiClientAbstract
         );
         return $this->handleRequest($endpoint, $parameters);
     }
+
+    public function findAllVideos($pageNumber = 0, $fields = array())
+    {
+        $endpoint = 'services/library';
+        $parameters = array(
+            'command' => 'find_all_videos',
+            'video_fields' => implode(',', $fields),
+            'page_number' => $pageNumber,
+        );
+        return $this->handleRequest($endpoint, $parameters);
+    }
 }
