@@ -64,6 +64,29 @@ class ApiClientMerrick extends ApiClientAbstract implements CacheableInterface
     }
 
     /**
+     * Performs a count of pending changes in merrick.
+     *
+     * @param  string $shortName The merrick/base2 pubcode.
+     * @return int    $count     The number of pending changes
+     */
+    public function pendingChangesCount($shortName)
+    {
+        $endpoint = '/content';
+        $parameters = [
+            'pending' => 'true',
+            'content_type' => 'company|product',
+            'pubgroup' => $shortName,
+            'count' => 'true'
+        ];
+        $response = $this->handleRequest($endpoint, $parameters, 'GET', 60);
+
+        if (!isset($response['content']) || !is_numeric($response['content'])) {
+            return 0;
+        }
+        return (int) $response['content'];
+    }
+
+    /**
      * Performs a section lookup by channel id and pub
      *
      * @param  string $sectionId   The section id
@@ -108,7 +131,7 @@ class ApiClientMerrick extends ApiClientAbstract implements CacheableInterface
      * @param  string $method     The request method
      * @return Symfony\Component\HttpFoundation\Response
      */
-    protected function handleRequest($endpoint, array $parameters = array(), $method = 'GET')
+    protected function handleRequest($endpoint, array $parameters = array(), $method = 'GET', $ttl = 0)
     {
         $request = $this->createRequest($endpoint, $parameters, $method);
 
@@ -141,7 +164,7 @@ class ApiClientMerrick extends ApiClientAbstract implements CacheableInterface
         } elseif ($response->isSuccessful()) {
             // Ok. Parse JSON response, cache and return
             $parsedResponse = @json_decode($response->getContent(), true);
-            $this->setCache($cacheKey, $parsedResponse);
+            $this->setCache($cacheKey, $parsedResponse, $ttl);
             return $parsedResponse;
         }
     }
