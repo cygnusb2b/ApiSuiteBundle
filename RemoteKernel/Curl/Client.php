@@ -173,6 +173,17 @@ class Client
 
         $this->logger->info('Curl: '. $this->request->getUri());
 
+        $curlInfo = curl_getinfo($ch);
+
+        // $this->logger->info('Curl Info: '.json_encode($curlInfo));
+
+        foreach ($curlInfo as $key => $val) {
+            if (is_array($val)) {
+                $val = 'JSON:'.json_encode($val);
+            }
+            $this->logger->info(sprintf("Curl Info: %s: %s", $key, $val));
+        }
+
         if (!curl_errno($ch)) {
             $this->handleResponse();
             $this->completeRequest();
@@ -255,7 +266,7 @@ class Client
             $this->addOption(CURLOPT_COOKIE, implode('; ', $cookieString));
         } else {
             $this->addOption(CURLOPT_COOKIE, '');
-        } 
+        }
     }
 
     /**
@@ -307,14 +318,39 @@ class Client
     private function handlePutFile()
     {
         if ($this->request->files->count() > 0) {
+
+            if (1 !== $this->request->files->count()) {
+                throw new \Exception('HTTP File PUT can only accept one file.');
+            }
+
+            $files = $this->request->files->all();
+            $file = reset($files);
+
+            if (is_null($file) || !($file instanceof \SplFileInfo)) {
+                throw new \Exception('File not in correct format for this handler.');
+            }
+
             // @todo Implement file handling
-            throw new \Exception('PUT file handling via Request->files not yet implemented.');
+
+            $this->addOption(CURLOPT_PUT, TRUE);
+
+            $filePath = sprintf("%s/%s", $file->getPath(), $file->getFilename());
+
+            $fp = fopen($filePath, 'r');
+
+            $this->addOption(CURLOPT_INFILE, $fp);
+            $this->addOption(CURLOPT_INFILESIZE, filesize($filePath));
+            $this->addOption(CURLOPT_FRESH_CONNECT, true);
+            $this->addOption(CURLOPT_FORBID_REUSE, true);
+            // var_dump($this->request->headers->all());
+            // die();
+
         } else {
             // Create temp file and put
             $filename = time() . '_' . mt_rand();
             $putFile = '/tmp/' . $filename . '.put';
             $r = file_put_contents($putFile, $this->request->getContent());
-         
+
             if ($r === false) {
                 throw new \Exception('Unable to write a put file. Tried: ' . $put_file);
             }

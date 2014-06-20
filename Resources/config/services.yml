@@ -8,6 +8,7 @@ parameters:
     cygnus_api_suite.api_client.gigya.class: Cygnus\ApiSuiteBundle\ApiClient\Gigya\ApiClientGigya
     cygnus_api_suite.api_client.brightcove.class: Cygnus\ApiSuiteBundle\ApiClient\Brightcove\ApiClientBrightcove
     cygnus_api_suite.api_client.base2.class: Cygnus\ApiSuiteBundle\ApiClient\Base2\ApiClientBase2
+    cygnus_api_suite.api_client.media.class: Cygnus\ApiSuiteBundle\ApiClient\Media\ApiClientMedia
     cygnus_api_suite.api_client.merrick.class: Cygnus\ApiSuiteBundle\ApiClient\Merrick\ApiClientMerrick
     cygnus_api_suite.oauth.kernel.class: Cygnus\ApiSuiteBundle\RemoteKernel\OAuth1a\RemoteKernel
 
@@ -43,6 +44,12 @@ services:
         calls:
              - [setRemoteHttpKernel, [@cygnus_api_suite.curl.kernel]]
              - [setCacheClient, [@snc_redis.default]]
+
+    cygnus_api_suite.api_client.media:
+        class: %cygnus_api_suite.api_client.media.class%
+        calls:
+             - [setRemoteHttpKernel, [@cygnus_api_suite.curl.kernel]]
+
     cygnus_api_suite.api_client.merrick:
         class: %cygnus_api_suite.api_client.merrick.class%
         calls:

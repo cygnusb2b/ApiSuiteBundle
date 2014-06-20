@@ -4,12 +4,11 @@ namespace Cygnus\ApiSuiteBundle\RemoteKernel\OAuth1a;
 use Symfony\Component\HttpFoundation\Request;
 use Cygnus\ApiSuiteBundle\RemoteKernel\Curl\Client;
 use Symfony\Component\HttpFoundation\Response;
+use Cygnus\ApiSuiteBundle\RemoteKernel\RemoteKernelAbstract;
 use Cygnus\ApiSuiteBundle\RemoteKernel\RemoteKernelInterface;
 
-class RemoteKernel implements RemoteKernelInterface
+class RemoteKernel extends RemoteKernelAbstract
 {
-    private $client;
-
     /**
      * The configuration options
      *
@@ -83,7 +82,7 @@ class RemoteKernel implements RemoteKernelInterface
             );
             $additionalParams = $this->requestToken->getAdditionalParams()->all();
             $params = array_merge($oauthParams, $additionalParams);
-         
+
             $url = $this->config->getAuthorizeUrl() . '?' . $this->normalizeRequestParamaters($params);
             return $url;
         } else {
@@ -94,8 +93,8 @@ class RemoteKernel implements RemoteKernelInterface
     /**
      * Handles a request by creating a Request object and sending it to the Kernel
      *
-     * @param  string $uri   
-     * @param  array  $headers    
+     * @param  string $uri
+     * @param  array  $headers
      * @param  string $method     The request method
      * @return Symfony\Component\HttpFoundation\Response
      */
@@ -208,9 +207,9 @@ class RemoteKernel implements RemoteKernelInterface
         foreach ($params as $key => $value) {
             $params[$key] = urlencode($value);
         }
-      
+
         ksort($params);
-        return http_build_query($params); 
+        return http_build_query($params);
     }
 
     /**
@@ -221,9 +220,9 @@ class RemoteKernel implements RemoteKernelInterface
      */
     public function constructRequestUrl($url) {
         $parsed = parse_url($url);
-      
+
         $constructedUrl = strtolower($parsed['scheme']) . "://" . $parsed['host'];
-      
+
         if (isset($parsed['port'])) {
             if ($parsed['scheme'] == "https" && $parsed['port'] != 443) {
                 $constructedUrl .= ":" . $parsed['port'];
@@ -232,7 +231,7 @@ class RemoteKernel implements RemoteKernelInterface
                 $constructedUrl .= ":" . $parsed['port'];
             }
         }
-      
+
         $constructedUrl .= $parsed['path'];
         return $constructedUrl;
    }
@@ -281,7 +280,7 @@ class RemoteKernel implements RemoteKernelInterface
             return call_user_func_array(array($this->config,$method), $args);
         } else {
             throw new \Exception('Method does not exist in Oauth Config: ' . $method);
-        }  
+        }
     }
 
     /**
@@ -290,15 +289,10 @@ class RemoteKernel implements RemoteKernelInterface
      * @param  array $config The config options
      * @return self
      */
-    public function setConfig(array $config) 
+    public function setConfig(array $config)
     {
         $this->config = new Config($config);
         return $this;
-    }
-
-    public function getClient()
-    {
-        return $this->client;
     }
 
     /**
@@ -351,15 +345,5 @@ class RemoteKernel implements RemoteKernelInterface
             $e->getMessage(),
             500
         );
-    }
-
-    public function createSimpleRequest($uri, $method = 'GET', $parameters = array(), $content = null)
-    {
-        return $this->createRequest($uri, $method, $parameters, array(), array(), array(), $content);
-    }
-
-    public function createRequest($uri, $method = 'GET', $parameters = array(), $cookies = array(), $files = array(), $server = array(), $content = null)
-    {
-        return Request::create($uri, $method, $parameters, $cookies, $files, $server, $content);
     }
 }

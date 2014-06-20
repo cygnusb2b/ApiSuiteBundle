@@ -3,20 +3,14 @@ namespace Cygnus\ApiSuiteBundle\RemoteKernel\Curl;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Cygnus\ApiSuiteBundle\RemoteKernel\RemoteKernelAbstract;
 use Cygnus\ApiSuiteBundle\RemoteKernel\RemoteKernelInterface;
 
-class RemoteKernel implements RemoteKernelInterface
+class RemoteKernel extends RemoteKernelAbstract
 {
-    private $client;
-
     public function __construct(Client $client)
     {
         $this->client = $client;
-    }
-
-    public function getClient()
-    {
-        return $this->client;
     }
 
     /**
@@ -69,15 +63,5 @@ class RemoteKernel implements RemoteKernelInterface
             $e->getMessage(),
             500
         );
-    }
-
-    public function createSimpleRequest($uri, $method = 'GET', $parameters = array(), $content = null)
-    {
-        return $this->createRequest($uri, $method, $parameters, array(), array(), array(), $content);
-    }
-
-    public function createRequest($uri, $method = 'GET', $parameters = array(), $cookies = array(), $files = array(), $server = array(), $content = null)
-    {
-        return Request::create($uri, $method, $parameters, $cookies, $files, $server, $content);
     }
 }
