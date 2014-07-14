@@ -331,7 +331,6 @@ class ApiClientBase2 extends ApiClientAbstract implements CacheableInterface
 
             // Get the API response object
             $response = $this->doRequest($request);
-
             $baseError = sprintf('Unable to complete API request "%s" with errors:', $request->getRequestUri());
 
             if ($response->isClientError()) {
@@ -350,6 +349,11 @@ class ApiClientBase2 extends ApiClientAbstract implements CacheableInterface
             } elseif ($response->isSuccessful()) {
                 // Ok. Parse JSON response, cache and return
                 $parsedResponse = @json_decode($response->getContent(), true);
+
+                if (!is_array($parsedResponse) || !isset($parsedResponse['status']) || $parsedResponse['status'] == 0) {
+                    throw new \Exception(sprintf('%s Invalid status received.', $baseError));
+                }
+
                 $this->setCache($cacheKey, $parsedResponse);
                 return $parsedResponse;
             }
