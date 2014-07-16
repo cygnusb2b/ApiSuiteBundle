@@ -107,6 +107,16 @@ class ApiClientMerrick extends ApiClientAbstract implements CacheableInterface
         return $response;
     }
 
+    public function sectionLookupBySectionAndChannelId($channelId, $sectionId)
+    {
+        $endpoint = '/section';
+        $parameters = [
+            'channel_id'    => $channelId,
+            'section_id'    => $sectionId,
+        ];
+        return $this->handleRequest($endpoint, $parameters);
+    }
+
     /**
      * Performs a section lookup by channel id and pub
      *
