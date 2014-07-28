@@ -249,7 +249,7 @@ class ApiClientBase2 extends ApiClientAbstract implements CacheableInterface
             'channel'   => strtolower($channelType),
             'pub'       => strtolower($pub),
         );
-        return $this->handleRequest($endpoint, $parameters);
+        return $this->handleRequest($endpoint, $parameters, 'GET', 86400);
     }
 
     /**
@@ -310,7 +310,7 @@ class ApiClientBase2 extends ApiClientAbstract implements CacheableInterface
      * @param  string $method     The request method
      * @return Symfony\Component\HttpFoundation\Response
      */
-    protected function handleRequest($endpoint, array $parameters = array(), $method = 'GET')
+    protected function handleRequest($endpoint, array $parameters = array(), $method = 'GET', $ttl = 0)
     {
         $request = $this->createRequest($endpoint, $parameters, $method);
 
@@ -327,7 +327,7 @@ class ApiClientBase2 extends ApiClientAbstract implements CacheableInterface
             ? 3
             : 0;
 
-        return $this->retry(function() use($request, $cacheKey) {
+        return $this->retry(function() use($request, $cacheKey, $ttl) {
 
             // Get the API response object
             $response = $this->doRequest($request);
@@ -354,7 +354,7 @@ class ApiClientBase2 extends ApiClientAbstract implements CacheableInterface
                     throw new \Exception(sprintf('%s Invalid status received.', $baseError));
                 }
 
-                $this->setCache($cacheKey, $parsedResponse);
+                $this->setCache($cacheKey, $parsedResponse, $ttl);
                 return $parsedResponse;
             }
         }, $retryLimit);
