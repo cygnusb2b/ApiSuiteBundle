@@ -249,7 +249,7 @@ class ApiClientBase2 extends ApiClientAbstract implements CacheableInterface
             'channel'   => strtolower($channelType),
             'pub'       => strtolower($pub),
         );
-        return $this->handleRequest($endpoint, $parameters, 'GET', 86400);
+        return $this->handleRequest($endpoint, $parameters, 'GET', 30);
     }
 
     /**
