@@ -70,6 +70,20 @@ class ApiClientBase2 extends ApiClientAbstract implements CacheableInterface
         return $response;
     }
 
+
+    /**
+     * Performs a contract search against the sales tool api
+     *
+     * @param  string $search The search string to pass
+     * @return array  The decodeed json response
+     */
+    public function contractsLookup($search)
+    {
+        $parameters = ['q' => $search];
+        $endpoint = '/contracts/search';
+        return $this->handleRequest($endpoint, $parameters);
+    }
+
     public function contentLookupByRange($pubgroup, $startingId = 0, $limit = 10)
     {
         $endpoint = '/content';
