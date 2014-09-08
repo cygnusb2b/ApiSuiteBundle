@@ -43,7 +43,7 @@ services:
         class: %cygnus_api_suite.api_client.base2.class%
         calls:
              - [setRemoteHttpKernel, [@cygnus_api_suite.curl.kernel]]
-             - [setCacheClient, [@snc_redis.group]]
+             - [setCacheClient, [@snc_redis.default]]
 
     cygnus_api_suite.api_client.media:
         class: %cygnus_api_suite.api_client.media.class%
@@ -54,7 +54,7 @@ services:
         class: %cygnus_api_suite.api_client.merrick.class%
         calls:
              - [setRemoteHttpKernel, [@cygnus_api_suite.curl.kernel]]
-             - [setCacheClient, [@snc_redis.group]]
+             - [setCacheClient, [@snc_redis.default]]
     cygnus_api_suite.api_client.brightcove:
         class: %cygnus_api_suite.api_client.brightcove.class%
         calls:
