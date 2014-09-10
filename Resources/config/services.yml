@@ -22,40 +22,51 @@ services:
         arguments: [@cygnus_api_suite.curl.header_processor, @cygnus_api_suite.curl.body_processor, @logger]
         tags:
             - { name: monolog.logger, channel: api_suite}
+
+    cygnus_api_suite.abstract.kernel:
+        abstract: true
+        arguments: [ @cygnus_api_suite.curl.client ]
+
     cygnus_api_suite.curl.kernel:
+        parent: cygnus_api_suite.abstract.kernel
         class: %cygnus_api_suite.curl.kernel.class%
-        arguments: [@cygnus_api_suite.curl.client]
+
     cygnus_api_suite.oauth.kernel:
+        parent: cygnus_api_suite.abstract.kernel
         class: %cygnus_api_suite.oauth.kernel.class%
-        arguments: [@cygnus_api_suite.curl.client]
-    cygnus_api_suite.api_client.omeda:
-        class: %cygnus_api_suite.api_client.omeda.class%
+
+    cygnus_api_suite.api_client.abstract:
+        abstract: true
         calls:
              - [setRemoteHttpKernel, [@cygnus_api_suite.curl.kernel]]
+
+    cygnus_api_suite.api_client.omeda:
+        class: %cygnus_api_suite.api_client.omeda.class%
+        parent: cygnus_api_suite.api_client.abstract
+
     cygnus_api_suite.api_client.openx:
         class: %cygnus_api_suite.api_client.openx.class%
+        parent: cygnus_api_suite.api_client.abstract
         calls:
              - [setRemoteHttpKernel, [@cygnus_api_suite.oauth.kernel]]
-    cygnus_api_suite.api_client.gigya:
-        class: %cygnus_api_suite.api_client.gigya.class%
+
 
     cygnus_api_suite.api_client.base2:
         class: %cygnus_api_suite.api_client.base2.class%
-        calls:
-             - [setRemoteHttpKernel, [@cygnus_api_suite.curl.kernel]]
-             - [setCacheClient, [@snc_redis.group]]
+        parent: cygnus_api_suite.api_client.abstract
+        tags:
+            - { name: cygnus_api_suite.cacheable }
 
     cygnus_api_suite.api_client.media:
         class: %cygnus_api_suite.api_client.media.class%
-        calls:
-             - [setRemoteHttpKernel, [@cygnus_api_suite.curl.kernel]]
+        parent: cygnus_api_suite.api_client.abstract
 
     cygnus_api_suite.api_client.merrick:
         class: %cygnus_api_suite.api_client.merrick.class%
-        calls:
-             - [setRemoteHttpKernel, [@cygnus_api_suite.curl.kernel]]
-             - [setCacheClient, [@snc_redis.group]]
+        parent: cygnus_api_suite.api_client.abstract
+        tags:
+            - { name: cygnus_api_suite.cacheable }
+
     cygnus_api_suite.api_client.brightcove:
         class: %cygnus_api_suite.api_client.brightcove.class%
-        calls:
-             - [setRemoteHttpKernel, [@cygnus_api_suite.curl.kernel]]
+        parent: cygnus_api_suite.api_client.abstract
