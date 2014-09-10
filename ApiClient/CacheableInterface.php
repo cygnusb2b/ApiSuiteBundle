@@ -6,6 +6,14 @@ use Symfony\Component\HttpFoundation\Request;
 interface CacheableInterface
 {
     /**
+     * Sets the cache client
+     *
+     * @param  $cacheClient
+     * @return self
+     */
+    public function setCacheClient($cacheClient);
+
+    /**
      * Creates a cache key from the Request object
      *
      * @param  Request $request The API request

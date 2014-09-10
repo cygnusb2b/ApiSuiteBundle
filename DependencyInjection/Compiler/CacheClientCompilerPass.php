@@ -27,7 +27,6 @@ class CacheClientCompilerPass implements CompilerPassInterface
 
         foreach ($resources as $id => $tagAttributes) {
             $definition = $container->getDefinition($id);
-
             $definition->addMethodCall(
                 'setCacheClient',
                 [new Reference($cacheClientId)]
