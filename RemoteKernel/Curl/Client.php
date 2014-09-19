@@ -284,6 +284,9 @@ class Client
             case 'PUT':
                 $this->handlePutFile();
                 break;
+            case 'DELETE':
+                $this->setPostFields();
+                break;
             default:
                 break;
         }
