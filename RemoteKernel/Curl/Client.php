@@ -334,7 +334,7 @@ class Client
 
             $this->addOption(CURLOPT_PUT, TRUE);
 
-            $filePath = sprintf("%s/%s", $file->getPath(), $file->getFilename());
+            $filePath = $file->getPathname();
 
             $fp = fopen($filePath, 'r');
 
