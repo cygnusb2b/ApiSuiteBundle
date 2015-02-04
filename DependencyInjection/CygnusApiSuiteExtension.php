@@ -14,6 +14,8 @@ use Symfony\Component\DependencyInjection\Loader;
  */
 class CygnusApiSuiteExtension extends Extension
 {
+    const TAG_NAME = 'cygnus_api_suite.cacheable';
+
     /**
      * {@inheritDoc}
      */
@@ -21,6 +23,8 @@ class CygnusApiSuiteExtension extends Extension
     {
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
+
+        $container->setParameter(sprintf('%s.cache_client', $this->getAlias()), $config['cache_client']);
 
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yml');

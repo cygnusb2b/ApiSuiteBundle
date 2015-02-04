@@ -284,6 +284,9 @@ class Client
             case 'PUT':
                 $this->handlePutFile();
                 break;
+            case 'DELETE':
+                $this->setPostFields();
+                break;
             default:
                 break;
         }
@@ -334,7 +337,7 @@ class Client
 
             $this->addOption(CURLOPT_PUT, TRUE);
 
-            $filePath = sprintf("%s/%s", $file->getPath(), $file->getFilename());
+            $filePath = $file->getPathname();
 
             $fp = fopen($filePath, 'r');
 
