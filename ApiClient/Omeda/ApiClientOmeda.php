@@ -391,7 +391,7 @@ class ApiClientOmeda extends ApiClientAbstract
      * @param  array|string $requestBody The request body to send to the API
      * @return Symfony\Component\HttpFoundation\Response
      */
-    public function omailDeploymentSearch($params)
+    public function omailDeploymentSearch($requestBody)
     {
         $endpoint = '/omail/deployment/search/*';
         return $this->handleRequest($endpoint, $requestBody, 'POST');
