@@ -3,6 +3,7 @@ parameters:
     cygnus_api_suite.curl.client.class: Cygnus\ApiSuiteBundle\RemoteKernel\Curl\Client
     cygnus_api_suite.curl.processor.header.class: Cygnus\ApiSuiteBundle\RemoteKernel\Curl\Processor\ResponseHeaderProcessor
     cygnus_api_suite.curl.processor.body.class: Cygnus\ApiSuiteBundle\RemoteKernel\Curl\Processor\ResponseBodyProcessor
+    cygnus_api_suite.api_client.google.geocode.class: Cygnus\ApiSuiteBundle\ApiClient\Google\ApiClientGeoCode
     cygnus_api_suite.api_client.omeda.class: Cygnus\ApiSuiteBundle\ApiClient\Omeda\ApiClientOmeda
     cygnus_api_suite.api_client.openx.class: Cygnus\ApiSuiteBundle\ApiClient\OpenX\ApiClientOpenX
     cygnus_api_suite.api_client.gigya.class: Cygnus\ApiSuiteBundle\ApiClient\Gigya\ApiClientGigya
@@ -39,6 +40,10 @@ services:
         abstract: true
         calls:
              - [setRemoteHttpKernel, [@cygnus_api_suite.curl.kernel]]
+
+    cygnus_api_suite.api_client.google.geocode:
+        class: %cygnus_api_suite.api_client.google.geocode.class%
+        parent: cygnus_api_suite.api_client.abstract
 
     cygnus_api_suite.api_client.omeda:
         class: %cygnus_api_suite.api_client.omeda.class%
