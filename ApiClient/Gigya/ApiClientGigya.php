@@ -1,20 +1,22 @@
 <?php
+
 namespace Cygnus\ApiSuiteBundle\ApiClient\Gigya;
 
-use Cygnus\ApiSuiteBundle\ApiClient\ApiClientAbstract;
-use Cygnus\ApiSuiteBundle\RemoteKernel\RemoteKernelInterface;
-use Symfony\Component\HttpFoundation\Cookie;
+use Symfony\Component\HttpFoundation\ParameterBag;
+use \GSResponse;
+use \GSObject;
+use \GSRequest;
 
-class ApiClientGigya extends ApiClientAbstract
+include_once 'SDK/GSSDK.php';
+
+class ApiClientGigya
 {
-    const VERSION = '1.0';
-
     /**
-     * An array of request methods that this API supports
+     * The configuration options
      *
-     * @var array
+     * @var ParameterBag
      */
-    protected $supportedMethods = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'];
+    protected $config;
 
     /**
      * An array of required configuration options
@@ -24,11 +26,11 @@ class ApiClientGigya extends ApiClientAbstract
     protected $requiredConfigOptions = [
         'apiKey',
         'secretKey',
-        'host',
+        'useHttps',
     ];
 
     /**
-     * Constructor. Sets the configuration for this Omeda API client instance
+     * Constructor. Sets the configuration for this API client instance
      *
      * @param  array $config The config options
      * @return void
@@ -38,18 +40,102 @@ class ApiClientGigya extends ApiClientAbstract
         $this->setConfig($config);
     }
 
+    public function socializeDeleteAccount($uid)
+    {
+        $params = [
+            'UID'   => $uid,
+        ];
+        return $this->sendRequest('socialize.deleteAccount', $params);
+    }
+
+    public function socializeNotifyRegistration($uid, $siteUid)
+    {
+        $params = [
+            'UID'       => $uid,
+            'siteUID'   => $siteUid,
+        ];
+        return $this->sendRequest('socialize.notifyRegistration', $params);
+    }
+
+    public function socializeNotifyLogin($siteUid, $newUser = false, array $userInfo = [])
+    {
+        $params = [
+            'siteUID'   => $siteUid,
+            'newUser'   => $newUser,
+            // 'userInfo'  => $userInfo,
+        ];
+        // var_dump($params);
+        // die();
+        return $this->sendRequest('socialize.notifyLogin', $params);
+    }
+
+    public function socializeGetUserInfo($uid)
+    {
+        $params = [
+            'UID'   => $uid,
+        ];
+        return $this->sendRequest('socialize.getUserInfo', $params);
+    }
+
+    public function accountsGetAccountInfo($uid)
+    {
+        $params = [
+            'UID'   => $uid,
+        ];
+        return $this->sendRequest('accounts.getAccountInfo', $params);
+    }
+
     /**
-     * Sets the configuration options for this API client and passes the OAuth settings to the Kernel
+     * API: Identify Storage.
+     * Method: Set Schema.
+     * @link http://developers.gigya.com/037_API_reference/Identity_Storage/ids.setSchema
+     *
+     * @param  array    $profileSchema
+     * @param  array    $dataSchema
+     * @return GSResponse
+     */
+    public function idsSetSchema(array $profileSchema, array $dataSchema)
+    {
+        $params = [
+            'profileSchema' => $profileSchema,
+            'dataSchema'    => $dataSchema,
+        ];
+        return $this->sendRequest('ids.setSchema', $params);
+    }
+
+
+    /**
+     * API: Identify Storage.
+     * Method: Get Schema.
+     * @link http://developers.gigya.com/037_API_reference/Identity_Storage/ids.getSchema
+     *
+     * @param  string   $filter
+     * @return GSResponse
+     */
+    public function idsGetSchema($filter = 'full')
+    {
+        if (!in_array($filter, ['full', 'explicitOnly', 'clientOnly'])) {
+            $filter = 'full';
+        }
+
+        // Set the request params
+        $params = [
+            'filter' => $filter,
+        ];
+        // Send the request
+        return $this->sendRequest('ids.getSchema', $params);
+    }
+
+    /**
+     * Sets the configuration options for this API client
      *
      * @param  array $config The config options
      * @return self
      */
     public function setConfig(array $config)
     {
-        ApiClientAbstract::setConfig($config);
-        if ($this->httpKernel instanceof RemoteKernelInterface) {
-            $this->httpKernel->setConfig($config);
-        }
+        $this->config = new ParameterBag($config);
+        $this->config->set('useHttps', false);
         return $this;
     }
 
@@ -60,99 +146,91 @@ class ApiClientGigya extends ApiClientAbstract
      */
     public function hasValidConfig()
     {
-        return (ApiClientAbstract::hasValidConfig() && $this->httpKernel->hasValidConfig());
-    }
-
-
-    /**
-     * Handles an API request and returns a Response object
-     *
-     * @param  string $endpoint The API endpoint
-     * @param  string $content  The body content to send with the request
-     * @param  string $method   The request method: GET, POST, etc
-     * @return Symfony\Component\HttpFoundation\Response
-     * @throws Exception If the client is unable to obtain API authorization
-     */
-    public function handleRequest($endpoint, $content = null, $method = 'GET')
-    {
-        $request = $this->createRequest($endpoint, $content, $method);
-        if ($this->isAuthorized()) {
-            return $this->doRequest($request);
-        } else {
-            if ($this->doOauthDance()) {
-                $response = $this->doRequest($request);
-                // Add the JSON content type, since it isn't explicitally returned with the API response
-                $response->headers->set('content-type', 'application/json; charset=UTF-8');
-                return $response;
-            } else {
-                throw new \Exception('Unable to authorize the API session.');
-            }
-
-
+        foreach ($this->requiredConfigOptions as $option) {
+            if (!$this->config->has($option)) return false;
         }
+        return true;
     }
 
     /**
-     * Creates a request that can be sent to the RemoteKernel
+     * Sends a Gigya API request.
      *
-     * @param  string $endpoint The API endpoint
-     * @param  string $content  The body content to send with the request
-     * @param  string $method   The request method: GET, POST, etc
-     * @return Symfony\Component\HttpFoundation\Request
+     * @param  string   $apiMethod  The Gigya API method, with namespace, e.g. socialize.login
+     * @param  array    $params     The API method parameters.
+     * @return GSResponse
      */
-    protected function createRequest($endpoint, $content = null, $method = 'GET')
+    protected function sendRequest($apiMethod, array $params = [])
     {
-        $headers = array('Content-Type' => 'application/json');
+        $request = $this->prepareRequest($apiMethod, $params);
+        $response = $request->send();
+        // @todo Convert GSResponse object into Symfony response object?
+        // $this->convertResponse($response);
+        return $response;
+    }
 
-        // Handle the request body content
-        if (is_scalar($content)) {
-            $content = (string) $content;
-        } elseif (is_array($content)) {
-            $content = @json_encode($content);
+    /**
+     * Prepares a Gigya API request.
+     *
+     * @param  string   $apiMethod  The Gigya API method, with namespace, e.g. socialize.login
+     * @param  array    $params     The API method parameters.
+     * @return GSRequest
+     */
+    protected function prepareRequest($apiMethod, array $params = [])
+    {
+        $params = new GSObject($params);
+        return $this->createGSRequest($apiMethod, $params);
+    }
+
+    /**
+     * Creates a GSRequest object.
+     *
+     * @param  string       $apiMethod  The Gigya API method name, such as 'socialize.setStatus'
+     * @param  GSObject     $params     The request parameters. @todo Should this be allowed?
+     * @param  string       $userKey    The user key to use instead of site key. @todo Should be a config option. Do we need it?
+     * @return GSRequest
+     */
+    protected function createGSRequest($apiMethod, GSObject $params = null, $userKey = null)
+    {
+        if (!$this->hasValidConfig()) {
+            throw new \RuntimeException('The configuration for this client is invalid.');
         }
-
-        // Create initial request object
-        return $this->httpKernel->createSimpleRequest($this->getUri($endpoint), $method, array(), $content);
+        return new GSRequest(
+            $this->getApiKey(),
+            $this->getSecretKey(),
+            $apiMethod,
+            $params,
+            $this->shouldUseHttps(),
+            $userKey
+        );
     }
 
     /**
-     * Gets the API hostname
+     * Determines whether API calls should use HTTPS.
      *
-     * @return string
+     * @return bool
      */
-    public function getHost()
+    public function shouldUseHttps()
     {
-        return trim($this->config->get('oxInstance'), '/');
+        return (Boolean) $this->config->get('useHttps');
     }
 
     /**
-     * Gets the API base endpoint, based on API version
+     * Gets the API key.
      *
-     * @return string
+     * @return string|null
      */
-    public function getBaseEndpoint()
+    public function getApiKey()
     {
-        if (self::VERSION == '3.0') {
-            return '/ox/3.0/a';
-        } else {
-            return '/ox/' . self::VERSION;
-        }
+        return $this->config->get('apiKey');
     }
 
     /**
-     * Gets the full request URI based on an API endpoint
+     * Gets the secret key.
      *
-     * @param  string $endpoint The API endpoint
-     * @return string The request URI
+     * @return string|null
      */
-    public function getUri($endpoint = null)
+    public function getSecretKey()
     {
-        $uri = rtrim($this->getHost(), '/');
-
-        // Add the API endpoint, if sent
-        if (!is_null($endpoint)) {
-            $uri .= $this->getBaseEndpoint() . '/' . trim($endpoint, '/');
-        }
-        return $uri;
+        return $this->config->get('secretKey');
     }
 }
