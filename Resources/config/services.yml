@@ -7,6 +7,7 @@ parameters:
     cygnus_api_suite.api_client.omeda.class: Cygnus\ApiSuiteBundle\ApiClient\Omeda\ApiClientOmeda
     cygnus_api_suite.api_client.openx.class: Cygnus\ApiSuiteBundle\ApiClient\OpenX\ApiClientOpenX
     cygnus_api_suite.api_client.gigya.class: Cygnus\ApiSuiteBundle\ApiClient\Gigya\ApiClientGigya
+    cygnus_api_suite.api_client.mailchimp.class: Cygnus\ApiSuiteBundle\ApiClient\Mailchimp\ApiClientMailchimp
     cygnus_api_suite.api_client.brightcove.class: Cygnus\ApiSuiteBundle\ApiClient\Brightcove\ApiClientBrightcove
     cygnus_api_suite.api_client.base2.class: Cygnus\ApiSuiteBundle\ApiClient\Base2\ApiClientBase2
     cygnus_api_suite.api_client.media.class: Cygnus\ApiSuiteBundle\ApiClient\Media\ApiClientMedia
@@ -41,9 +42,16 @@ services:
         calls:
              - [setRemoteHttpKernel, [@cygnus_api_suite.curl.kernel]]
 
+    cygnus_api_suite.api_client.mailchimp:
+        class: %cygnus_api_suite.api_client.mailchimp.class%
+        parent: cygnus_api_suite.api_client.abstract
+
     cygnus_api_suite.api_client.google.geocode:
         class: %cygnus_api_suite.api_client.google.geocode.class%
         parent: cygnus_api_suite.api_client.abstract
+
+    cygnus_api_suite.api_client.gigya:
+        class: %cygnus_api_suite.api_client.gigya.class%
 
     cygnus_api_suite.api_client.omeda:
         class: %cygnus_api_suite.api_client.omeda.class%
