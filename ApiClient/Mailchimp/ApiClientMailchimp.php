@@ -26,6 +26,22 @@ class ApiClientMailchimp extends ApiClientAbstract
     }
 
     /**
+     * Retrieves a single campaign by id.
+     *
+     * @param  string  $id
+     * @return array
+     * @throws \InvalidArgumentException If the campaign cannot be retrieved off the response.
+     */
+    public function campaignFindById($id)
+    {
+        $campaign = $this->campaignsList(['campaign_id' => $id]);
+        if (!isset($campaign['data'][0])) {
+            throw new \InvalidArgumentException(sprintf('Unable to find campaign using id %s', $id));
+        }
+        return $campaign['data'][0];
+    }
+
+    /**
      * Get the list of campaigns and their details matching the specified filters.
      * @link https://apidocs.mailchimp.com/api/2.0/campaigns/list.php
      *
@@ -56,19 +72,77 @@ class ApiClientMailchimp extends ApiClientAbstract
     }
 
     /**
-     * Get all the information for particular members of a list.
-     * @link https://apidocs.mailchimp.com/api/2.0/lists/member-info.php
+     * Subscribe a batch of email addresses to a list at once.
+     * @link https://apidocs.mailchimp.com/api/2.0/lists/batch-subscribe.php
      *
-     * @param  string       $id     The list id to connect to.
-     * @param  array        $emails An array of up to 50 email structs.
+     * @param  string   $listId
+     * @param  array    $batch
+     * @param  bool     $doubleOptin
+     * @param  bool     $updateExisting
+     * @param  bool     $replaceInterests
      * @return array
      */
-    public function listsMemberInfo($id, array $emails)
+    public function listsBatchSubscribe($listId, array $batch, $doubleOptin = false, $updateExisting = true, $replaceInterests = false)
     {
-        $endpoint = '/lists/member-info';
+        $n = 0;
+        $batches = [];
+        $batchSize = $this->getBatchSize();
+        foreach (array_values($batch) as $i => $record) {
+            if (0 === $i % $batchSize) {
+                $n++;
+            }
+            $batches[$n][] = $record;
+        }
+
+        $responses = [];
+        $endpoint = '/lists/batch-subscribe';
+        foreach ($batches as $batch) {
+            $body = [
+                'id'                => $listId,
+                'batch'             => $batch,
+                'double_optin'      => $doubleOptin,
+                'update_existing'   => $updateExisting,
+                'replace_interests' => $replaceInterests,
+            ];
+            $responses[] = $this->handleRequest($endpoint, $body);
+        }
+        return $responses;
+    }
+
+    /**
+     * Add a single Interest Group.
+     * @link https://apidocs.mailchimp.com/api/2.0/lists/interest-group-add.php
+     *
+     * @param  string   $listId
+     * @param  string   $name
+     * @param  int      $groupingId
+     * @return array
+     */
+    public function listsInterestGroupAdd($listId, $name, $groupingId)
+    {
+        $endpoint = '/lists/interest-group-add';
         $body = [
-            'id'    => $id,
-            'emails'=> $emails,
+            'id'            => $listId,
+            'group_name'    => $name,
+            'grouping_id'   => $groupingId,
+        ];
+        return $this->handleRequest($endpoint, $body);
+    }
+
+    /**
+     * Get the list of interest groupings for a given list, including the label, form information, and included groups for each.
+     * @link https://apidocs.mailchimp.com/api/2.0/lists/interest-groupings.php
+     *
+     * @param  string   $listId
+     * @param  bool     $counts
+     * @return array
+     */
+    public function listsInterestGroupings($listId, $counts = false)
+    {
+        $endpoint = '/lists/interest-groupings';
+        $body = [
+            'id'    => $listId,
+            'counts'=> $counts,
         ];
         return $this->handleRequest($endpoint, $body);
     }
@@ -90,20 +164,69 @@ class ApiClientMailchimp extends ApiClientAbstract
         return $member['data'][0];
     }
 
-    /**
-     * Retrieves a single campaign by id.
-     *
-     * @param  string  $id
-     * @return array
-     * @throws \InvalidArgumentException If the campaign cannot be retrieved off the response.
-     */
-    public function campaignFindById($id)
+    public function listsFindMemberByEmail($listId, $email)
     {
-        $campaign = $this->campaignsList(['campaign_id' => $id]);
-        if (!isset($campaign['data'][0])) {
-            throw new \InvalidArgumentException(sprintf('Unable to find campaign using id %s', $id));
+        $member = $this->listsMemberInfo($listId, [['email' => $email]]);
+        if (!isset($member['data'][0])) {
+            throw new \InvalidArgumentException(sprintf('Unable to find member info using email %s', $email));
         }
-        return $campaign['data'][0];
+        return $member['data'][0];
+    }
+
+    /**
+     * Get all the information for particular members of a list.
+     * @link https://apidocs.mailchimp.com/api/2.0/lists/member-info.php
+     *
+     * @param  string       $id     The list id to connect to.
+     * @param  array        $emails An array of up to 50 email structs.
+     * @return array
+     */
+    public function listsMemberInfo($id, array $emails)
+    {
+        $endpoint = '/lists/member-info';
+        $body = [
+            'id'    => $id,
+            'emails'=> $emails,
+        ];
+        return $this->handleRequest($endpoint, $body);
+    }
+
+    /**
+     * Add a new merge tag to a given list.
+     * @link https://apidocs.mailchimp.com/api/2.0/lists/merge-var-add.php
+     *
+     * @param  string   $listId
+     * @param  string   $tag
+     * @param  string   $name
+     * @param  array    $options
+     * @return array
+     */
+    public function listsMergeVarAdd($listId, $tag, $name, array $options = [])
+    {
+        $endpoint = '/lists/merge-var-add';
+        $body = [
+            'id'        => $listId,
+            'tag'       => $tag,
+            'name'      => $name,
+            'options'   => $options,
+        ];
+        return $this->handleRequest($endpoint, $body);
+    }
+
+    /**
+     * Get the list of merge tags for a given list, including their name, tag, and required setting.
+     * @link https://apidocs.mailchimp.com/api/2.0/lists/merge-vars.php
+     *
+     * @param  array    $listIds
+     * @return array
+     */
+    public function listsMergeVars($listId)
+    {
+        $endpoint = '/lists/merge-vars';
+        $body = [
+            'id'    => [$listId],
+        ];
+        return $this->handleRequest($endpoint, $body);
     }
 
     /**
@@ -172,6 +295,19 @@ class ApiClientMailchimp extends ApiClientAbstract
             $uri .= rtrim($endpoint, '/');
         }
         return $uri;
+    }
+
+    /**
+     * Gets the batch size for batch operations (such as batch subscribe).
+     *
+     * @return int
+     */
+    public function getBatchSize()
+    {
+        if ($this->config->has('batchSize')) {
+            return (Integer) $this->config->get('batchSize');
+        }
+        return 5000;
     }
 
     /**
