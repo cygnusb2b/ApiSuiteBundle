@@ -2,7 +2,7 @@
 namespace Cygnus\ApiSuiteBundle\ApiClient\Mailchimp;
 
 use Cygnus\ApiSuiteBundle\ApiClient\ApiClientAbstract;
-
+use Symfony\Component\HttpFoundation\Response;
 use \DateTime;
 
 class ApiClientMailchimp extends ApiClientAbstract
@@ -104,7 +104,15 @@ class ApiClientMailchimp extends ApiClientAbstract
                 'update_existing'   => $updateExisting,
                 'replace_interests' => $replaceInterests,
             ];
-            $responses[] = $this->handleRequest($endpoint, $body);
+            try {
+                $responses[] = $this->handleRequest($endpoint, $body);
+            } catch (MailchimpApiException $e) {
+                if (212 === $e->getCode()) {
+                    $responses[] = $e->getResponse();
+                } else {
+                    throw $e;
+                }
+            }
         }
         return $responses;
     }
@@ -125,6 +133,26 @@ class ApiClientMailchimp extends ApiClientAbstract
             'id'            => $listId,
             'group_name'    => $name,
             'grouping_id'   => $groupingId,
+        ];
+        return $this->handleRequest($endpoint, $body);
+    }
+
+    /**
+     * Delete a single Interest Group.
+     * @link https://apidocs.mailchimp.com/api/2.0/lists/interest-group-del.php
+     *
+     * @param  string   $listId
+     * @param  string   $name
+     * @param  int      $groupingId
+     * @return array
+     */
+    public function listsInterestGroupDel($listId, $name, $groupingId)
+    {
+        $endpoint = '/lists/interest-group-del';
+        $body = [
+            'id'            => $listId,
+            'group_name'    => $name,
+            'grouping_id'   => (Integer) $groupingId,
         ];
         return $this->handleRequest($endpoint, $body);
     }
@@ -234,28 +262,70 @@ class ApiClientMailchimp extends ApiClientAbstract
      *
      * @param  string $endpoint     The API endpoint
      * @param  array  $body         The request body content to use
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @return array
      */
     protected function handleRequest($endpoint, array $body = [])
     {
         $request = $this->createRequest($endpoint, $body);
         $response = $this->doRequest($request);
 
-        $baseError = sprintf('Unable to complete API request "%s" with errors:', $request->getRequestUri());
+        $parsedResponse = @json_decode($response->getContent(), true);
 
-        if ($response->isSuccessful()) {
-            // Ok. Parse JSON response, cache and return
-            $parsedResponse = @json_decode($response->getContent(), true);
-            if (!is_array($parsedResponse)) {
-                throw new \Exception(sprintf('%s Unable to parse the response body.', $baseError));
-            }
-            if (isset($parsedResponse['errors']) && !empty($parsedResponse['errors'])) {
-                throw new \Exception(sprintf('%s %s.', $baseError, json_encode($parsedResponse['errors'])));
-            }
-            return $parsedResponse;
-        } else {
-            throw new \Exception(sprintf('%s %s.', $baseError, $response->getContent()));
+        // var_dump($parsedResponse);
+        // die();
+
+        if (!is_array($parsedResponse)) {
+            throw new \RuntimeException(sprintf('Mailchimp API Error: Unable to parse the response body.'));
         }
+
+        $this->handleException($parsedResponse);
+
+        return $parsedResponse;
+    }
+
+    protected function handleException(array $body)
+    {
+        $errors = [];
+        if (isset($body['errors']) && !empty($body['errors'])) {
+            $errors = $body['errors'];
+        } elseif (isset($body['error'])) {
+            $errors = [$body];
+        }
+
+        foreach ($errors as $error) {
+            $name = isset($error['name']) ? $error['name'] : 'Unspecified API error.';
+            $e = new MailchimpApiException($name, $error['error'], $error['code']);
+            $e->setResponse($body);
+            throw $e;
+        }
+    }
+
+    /**
+     * Determines if a field value is an associative array.
+     *
+     * @param  mixed $value The value to check
+     * @return bool
+     */
+    public function isAssociativeArray($value)
+    {
+        if (!is_array($value)) {
+            return false;
+        }
+        return !self::isSequentialArray($value);
+    }
+
+    /**
+     * Determines if a field value is a sequential array.
+     *
+     * @param  mixed $value The value to check
+     * @return bool
+     */
+    public function isSequentialArray($value)
+    {
+        if (!is_array($value)) {
+            return false;
+        }
+        return array_keys($value) === range(0, count($value) - 1);
     }
 
     /**
