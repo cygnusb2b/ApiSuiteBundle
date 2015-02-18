@@ -1,6 +1,10 @@
 <?php
 namespace Cygnus\ApiSuiteBundle\ApiClient\Mailchimp;
 
+use Cygnus\ApiSuiteBundle\ApiClient\Mailchimp\Exception\MailchimpException;
+use Cygnus\ApiSuiteBundle\ApiClient\Mailchimp\Exception\MailchimpHttpException;
+use Cygnus\ApiSuiteBundle\ApiClient\Mailchimp\Exception\MailchimpResponseException;
+use Cygnus\ApiSuiteBundle\ApiClient\Mailchimp\Resources\AbstractResource;
 use Cygnus\ApiSuiteBundle\ApiClient\ApiClientAbstract;
 use Symfony\Component\HttpFoundation\Response;
 use \DateTime;
@@ -23,28 +27,47 @@ class ApiClientMailchimp extends ApiClientAbstract
     public function __construct(array $config = array())
     {
         $this->setConfig($config);
+        $this->setResources();
+    }
+
+    public function setResources()
+    {
+        $namespace = 'Cygnus\\ApiSuiteBundle\\ApiClient\\Mailchimp\\Resources';
+        $resources = [
+            'campaigns' => 'Campaigns',
+            'lists'     => 'Lists',
+            'templates' => 'Templates',
+        ];
+        foreach ($resources as $key => $class) {
+            $fqcn = sprintf('%s\\%s', $namespace, $class);
+            $this->resources[$key] = new $fqcn($key, $this);
+        }
+        return $this;
+    }
+
+    public function getResource($key)
+    {
+        return $this->resources[$key];
     }
 
     /**
      * Retrieves a single campaign by id.
      *
+     * @deprecated
      * @param  string  $id
      * @return array
      * @throws \InvalidArgumentException If the campaign cannot be retrieved off the response.
      */
     public function campaignFindById($id)
     {
-        $campaign = $this->campaignsList(['campaign_id' => $id]);
-        if (!isset($campaign['data'][0])) {
-            throw new \InvalidArgumentException(sprintf('Unable to find campaign using id %s', $id));
-        }
-        return $campaign['data'][0];
+        return $this->getResource('campaigns')->findById($id);
     }
 
     /**
      * Get the list of campaigns and their details matching the specified filters.
      * @link https://apidocs.mailchimp.com/api/2.0/campaigns/list.php
      *
+     * @deprecated
      * @param  array        $filters
      * @param  int          $start
      * @param  int          $limit
@@ -54,27 +77,14 @@ class ApiClientMailchimp extends ApiClientAbstract
      */
     public function campaignsList(array $filters = [], $start = 0, $limit = 0, $sortField = null, $sortDir = 'DESC')
     {
-        $endpoint = '/campaigns/list';
-        $body = [
-            'filters'   => $filters,
-            'sort_dir'  => $sortDir,
-        ];
-        if (!empty($start)) {
-            $body['start'] = (Integer) $start;
-        }
-        if (!empty($limit)) {
-            $body['limit'] = (Integer) $limit;
-        }
-        if (!empty($sortField)) {
-            $body['sort_field'] = $sortField;
-        }
-        return $this->handleRequest($endpoint, $body);
+        return $this->getResource('campaigns')->getList($filters, $start, $limit, $sortField, $sortDir);
     }
 
     /**
      * Subscribe a batch of email addresses to a list at once.
      * @link https://apidocs.mailchimp.com/api/2.0/lists/batch-subscribe.php
      *
+     * @deprecated
      * @param  string   $listId
      * @param  array    $batch
      * @param  bool     $doubleOptin
@@ -84,43 +94,14 @@ class ApiClientMailchimp extends ApiClientAbstract
      */
     public function listsBatchSubscribe($listId, array $batch, $doubleOptin = false, $updateExisting = true, $replaceInterests = false)
     {
-        $n = 0;
-        $batches = [];
-        $batchSize = $this->getBatchSize();
-        foreach (array_values($batch) as $i => $record) {
-            if (0 === $i % $batchSize) {
-                $n++;
-            }
-            $batches[$n][] = $record;
-        }
-
-        $responses = [];
-        $endpoint = '/lists/batch-subscribe';
-        foreach ($batches as $batch) {
-            $body = [
-                'id'                => $listId,
-                'batch'             => $batch,
-                'double_optin'      => $doubleOptin,
-                'update_existing'   => $updateExisting,
-                'replace_interests' => $replaceInterests,
-            ];
-            try {
-                $responses[] = $this->handleRequest($endpoint, $body);
-            } catch (MailchimpApiException $e) {
-                if (212 === $e->getCode()) {
-                    $responses[] = $e->getResponse();
-                } else {
-                    throw $e;
-                }
-            }
-        }
-        return $responses;
+        return $this->getResource('lists')->batchSubscribe($listId, $batch, $doubleOptin, $updateExisting, $replaceInterests);
     }
 
     /**
      * Add a single Interest Group.
      * @link https://apidocs.mailchimp.com/api/2.0/lists/interest-group-add.php
      *
+     * @deprecated
      * @param  string   $listId
      * @param  string   $name
      * @param  int      $groupingId
@@ -128,19 +109,14 @@ class ApiClientMailchimp extends ApiClientAbstract
      */
     public function listsInterestGroupAdd($listId, $name, $groupingId)
     {
-        $endpoint = '/lists/interest-group-add';
-        $body = [
-            'id'            => $listId,
-            'group_name'    => $name,
-            'grouping_id'   => $groupingId,
-        ];
-        return $this->handleRequest($endpoint, $body);
+        return $this->getResource('lists')->interestGroupAdd($listId, $name, $groupingId);
     }
 
     /**
      * Delete a single Interest Group.
      * @link https://apidocs.mailchimp.com/api/2.0/lists/interest-group-del.php
      *
+     * @deprecated
      * @param  string   $listId
      * @param  string   $name
      * @param  int      $groupingId
@@ -148,35 +124,39 @@ class ApiClientMailchimp extends ApiClientAbstract
      */
     public function listsInterestGroupDel($listId, $name, $groupingId)
     {
-        $endpoint = '/lists/interest-group-del';
-        $body = [
-            'id'            => $listId,
-            'group_name'    => $name,
-            'grouping_id'   => (Integer) $groupingId,
-        ];
-        return $this->handleRequest($endpoint, $body);
+        return $this->getResource('lists')->interestGroupDel($listId, $name, $groupingId);
     }
 
     /**
      * Get the list of interest groupings for a given list, including the label, form information, and included groups for each.
      * @link https://apidocs.mailchimp.com/api/2.0/lists/interest-groupings.php
      *
+     * @deprecated
      * @param  string   $listId
      * @param  bool     $counts
      * @return array
      */
     public function listsInterestGroupings($listId, $counts = false)
     {
-        $endpoint = '/lists/interest-groupings';
-        $body = [
-            'id'    => $listId,
-            'counts'=> $counts,
-        ];
-        return $this->handleRequest($endpoint, $body);
+        return $this->getResource('lists')->interestGroupings($listId, $counts);
     }
 
     /**
-     * Retrieves the member information from a last for a single email address.
+     * Retrieves the member information from a list for a single email address.
+     *
+     * @deprecated
+     * @param  string  $listId The List ID.
+     * @param  string  $email  The Email address.
+     * @return array
+     * @throws \InvalidArgumentException If the member data cannot be retrieved off the response.
+     */
+    public function listsFindMemberByEmail($listId, $email)
+    {
+        return $this->getResource('lists')->findMemberByEmail($listId, $email);
+    }
+
+    /**
+     * Retrieves the member information from a list for a single email id.
      *
      * @param  string  $listId The List ID.
      * @param  string  $euid   The Email UID.
@@ -185,44 +165,28 @@ class ApiClientMailchimp extends ApiClientAbstract
      */
     public function listsFindMemberByEuid($listId, $euid)
     {
-        $member = $this->listsMemberInfo($listId, [['euid' => $euid]]);
-        if (!isset($member['data'][0])) {
-            throw new \InvalidArgumentException(sprintf('Unable to find member info using id %s', $euid));
-        }
-        return $member['data'][0];
-    }
-
-    public function listsFindMemberByEmail($listId, $email)
-    {
-        $member = $this->listsMemberInfo($listId, [['email' => $email]]);
-        if (!isset($member['data'][0])) {
-            throw new \InvalidArgumentException(sprintf('Unable to find member info using email %s', $email));
-        }
-        return $member['data'][0];
+        return $this->getResource('lists')->findMemberByEuid($listId, $euid);
     }
 
     /**
      * Get all the information for particular members of a list.
      * @link https://apidocs.mailchimp.com/api/2.0/lists/member-info.php
      *
+     * @deprecated
      * @param  string       $id     The list id to connect to.
      * @param  array        $emails An array of up to 50 email structs.
      * @return array
      */
     public function listsMemberInfo($id, array $emails)
     {
-        $endpoint = '/lists/member-info';
-        $body = [
-            'id'    => $id,
-            'emails'=> $emails,
-        ];
-        return $this->handleRequest($endpoint, $body);
+        return $this->getResource('lists')->memberInfo($id, $emails);
     }
 
     /**
      * Add a new merge tag to a given list.
      * @link https://apidocs.mailchimp.com/api/2.0/lists/merge-var-add.php
      *
+     * @deprecated
      * @param  string   $listId
      * @param  string   $tag
      * @param  string   $name
@@ -231,30 +195,20 @@ class ApiClientMailchimp extends ApiClientAbstract
      */
     public function listsMergeVarAdd($listId, $tag, $name, array $options = [])
     {
-        $endpoint = '/lists/merge-var-add';
-        $body = [
-            'id'        => $listId,
-            'tag'       => $tag,
-            'name'      => $name,
-            'options'   => $options,
-        ];
-        return $this->handleRequest($endpoint, $body);
+        return $this->getResource('lists')->mergeVarAdd($listId, $tag, $name, $options);
     }
 
     /**
      * Get the list of merge tags for a given list, including their name, tag, and required setting.
      * @link https://apidocs.mailchimp.com/api/2.0/lists/merge-vars.php
      *
+     * @deprecated
      * @param  array    $listIds
      * @return array
      */
     public function listsMergeVars($listId)
     {
-        $endpoint = '/lists/merge-vars';
-        $body = [
-            'id'    => [$listId],
-        ];
-        return $this->handleRequest($endpoint, $body);
+        return $this->getResource('lists')->mergeVars($listId);
     }
 
     /**
@@ -264,68 +218,40 @@ class ApiClientMailchimp extends ApiClientAbstract
      * @param  array  $body         The request body content to use
      * @return array
      */
-    protected function handleRequest($endpoint, array $body = [])
+    public function handleRequest($endpoint, array $body = [])
     {
         $request = $this->createRequest($endpoint, $body);
-        $response = $this->doRequest($request);
 
-        $parsedResponse = @json_decode($response->getContent(), true);
-
-        // var_dump($parsedResponse);
-        // die();
-
-        if (!is_array($parsedResponse)) {
-            throw new \RuntimeException(sprintf('Mailchimp API Error: Unable to parse the response body.'));
+        try {
+            $response = $this->doRequest($request);
+            $parsed = json_decode($response->getContent(), true);
+        } catch (\Exception $e) {
+            throw new MailchimpHttpException('API Response processing failed. Unable to retrieve a response.', 0, $e);
         }
 
-        $this->handleException($parsedResponse);
+        if (!is_array($parsed)) {
+            throw new MailchimpHttpException('API Response processing failed. Unable to parse the response.');
+        }
 
-        return $parsedResponse;
+        if (floor($response->getStatusCode() / 100) >= 4) {
+            throw $this->handleException($parsed);
+        }
+        return $parsed;
     }
 
+    /**
+     * Handles (and throws) API exceptions when errors are encountered in the response body.
+     *
+     * @param  array    $body
+     * @return MailchimpResponseException
+     * @throws MailchimpException
+     */
     protected function handleException(array $body)
     {
-        $errors = [];
-        if (isset($body['errors']) && !empty($body['errors'])) {
-            $errors = $body['errors'];
-        } elseif (isset($body['error'])) {
-            $errors = [$body];
+        if ('error' !== $result['status'] || !$result['name']) {
+            throw new MailchimpException(sprintf('An unexpected error was received: %s', json_encode($body)));
         }
-
-        foreach ($errors as $error) {
-            $name = isset($error['name']) ? $error['name'] : 'Unspecified API error.';
-            $e = new MailchimpApiException($name, $error['error'], $error['code']);
-            $e->setResponse($body);
-            throw $e;
-        }
-    }
-
-    /**
-     * Determines if a field value is an associative array.
-     *
-     * @param  mixed $value The value to check
-     * @return bool
-     */
-    public function isAssociativeArray($value)
-    {
-        if (!is_array($value)) {
-            return false;
-        }
-        return !self::isSequentialArray($value);
-    }
-
-    /**
-     * Determines if a field value is a sequential array.
-     *
-     * @param  mixed $value The value to check
-     * @return bool
-     */
-    public function isSequentialArray($value)
-    {
-        if (!is_array($value)) {
-            return false;
-        }
-        return array_keys($value) === range(0, count($value) - 1);
+        return new MailchimpResponseException($body);
     }
 
     /**
