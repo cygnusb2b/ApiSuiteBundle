@@ -19,6 +19,13 @@ class ApiClientMailchimp extends ApiClientAbstract
     protected $requiredConfigOptions = ['apikey', 'host'];
 
     /**
+     * An array of API resource objects.
+     *
+     * @var AbstractResource
+     */
+    protected $resources = [];
+
+    /**
      * Constructor. Sets the configuration for this Omeda API client instance
      *
      * @param  array $config The config options
@@ -30,6 +37,11 @@ class ApiClientMailchimp extends ApiClientAbstract
         $this->setResources();
     }
 
+    /**
+     * Sets all API resources, such as lists, campaigns, etc.
+     *
+     * @return self
+     */
     public function setResources()
     {
         $namespace = 'Cygnus\\ApiSuiteBundle\\ApiClient\\Mailchimp\\Resources';
@@ -40,175 +52,68 @@ class ApiClientMailchimp extends ApiClientAbstract
         ];
         foreach ($resources as $key => $class) {
             $fqcn = sprintf('%s\\%s', $namespace, $class);
-            $this->resources[$key] = new $fqcn($key, $this);
+            $this->addResource($key, new $fqcn($key, $this));
         }
         return $this;
     }
 
+    /**
+     * Adds an API resource to the client.
+     *
+     * @param  string               $key
+     * @param  AbstractResource     $resource
+     * @return self
+     */
+    protected function addResource($key, AbstractResource $resource)
+    {
+        $this->resources[$key] = $resource;
+        return $this;
+    }
+
+    /**
+     * Gets an API resource
+     *
+     * @param  string   $key
+     * @return AbstractResource
+     * @throws \RuntimeException If resource is not found.
+     */
     public function getResource($key)
     {
+        if (false === $this->hasResource($key)) {
+            throw new \RuntimeException(sprintf('No Mailchimp API resource exists for "%s"', $key));
+        }
         return $this->resources[$key];
     }
 
     /**
-     * Retrieves a single campaign by id.
+     * Determines if the API client as a resource.
      *
-     * @deprecated
-     * @param  string  $id
-     * @return array
-     * @throws \InvalidArgumentException If the campaign cannot be retrieved off the response.
+     * @param  string   $key
+     * @return bool
      */
-    public function campaignFindById($id)
+    public function hasResource($key)
     {
-        return $this->getResource('campaigns')->findById($id);
+        return isset($this->resources[$key]);
     }
 
     /**
-     * Get the list of campaigns and their details matching the specified filters.
-     * @link https://apidocs.mailchimp.com/api/2.0/campaigns/list.php
+     * Magic call method to access resources as an object method.
      *
-     * @deprecated
-     * @param  array        $filters
-     * @param  int          $start
-     * @param  int          $limit
-     * @param  string|null  $sortField
-     * @param  string       $sortDir
-     * @return array
+     * @return AbstractResource
      */
-    public function campaignsList(array $filters = [], $start = 0, $limit = 0, $sortField = null, $sortDir = 'DESC')
+    public function __call($name, array $args)
     {
-        return $this->getResource('campaigns')->getList($filters, $start, $limit, $sortField, $sortDir);
+        return $this->getResource($name);
     }
 
     /**
-     * Subscribe a batch of email addresses to a list at once.
-     * @link https://apidocs.mailchimp.com/api/2.0/lists/batch-subscribe.php
+     * Magic get method to access resources as an object property.
      *
-     * @deprecated
-     * @param  string   $listId
-     * @param  array    $batch
-     * @param  bool     $doubleOptin
-     * @param  bool     $updateExisting
-     * @param  bool     $replaceInterests
-     * @return array
+     * @return AbstractResource
      */
-    public function listsBatchSubscribe($listId, array $batch, $doubleOptin = false, $updateExisting = true, $replaceInterests = false)
+    public function __get($name)
     {
-        return $this->getResource('lists')->batchSubscribe($listId, $batch, $doubleOptin, $updateExisting, $replaceInterests);
-    }
-
-    /**
-     * Add a single Interest Group.
-     * @link https://apidocs.mailchimp.com/api/2.0/lists/interest-group-add.php
-     *
-     * @deprecated
-     * @param  string   $listId
-     * @param  string   $name
-     * @param  int      $groupingId
-     * @return array
-     */
-    public function listsInterestGroupAdd($listId, $name, $groupingId)
-    {
-        return $this->getResource('lists')->interestGroupAdd($listId, $name, $groupingId);
-    }
-
-    /**
-     * Delete a single Interest Group.
-     * @link https://apidocs.mailchimp.com/api/2.0/lists/interest-group-del.php
-     *
-     * @deprecated
-     * @param  string   $listId
-     * @param  string   $name
-     * @param  int      $groupingId
-     * @return array
-     */
-    public function listsInterestGroupDel($listId, $name, $groupingId)
-    {
-        return $this->getResource('lists')->interestGroupDel($listId, $name, $groupingId);
-    }
-
-    /**
-     * Get the list of interest groupings for a given list, including the label, form information, and included groups for each.
-     * @link https://apidocs.mailchimp.com/api/2.0/lists/interest-groupings.php
-     *
-     * @deprecated
-     * @param  string   $listId
-     * @param  bool     $counts
-     * @return array
-     */
-    public function listsInterestGroupings($listId, $counts = false)
-    {
-        return $this->getResource('lists')->interestGroupings($listId, $counts);
-    }
-
-    /**
-     * Retrieves the member information from a list for a single email address.
-     *
-     * @deprecated
-     * @param  string  $listId The List ID.
-     * @param  string  $email  The Email address.
-     * @return array
-     * @throws \InvalidArgumentException If the member data cannot be retrieved off the response.
-     */
-    public function listsFindMemberByEmail($listId, $email)
-    {
-        return $this->getResource('lists')->findMemberByEmail($listId, $email);
-    }
-
-    /**
-     * Retrieves the member information from a list for a single email id.
-     *
-     * @param  string  $listId The List ID.
-     * @param  string  $euid   The Email UID.
-     * @return array
-     * @throws \InvalidArgumentException If the member data cannot be retrieved off the response.
-     */
-    public function listsFindMemberByEuid($listId, $euid)
-    {
-        return $this->getResource('lists')->findMemberByEuid($listId, $euid);
-    }
-
-    /**
-     * Get all the information for particular members of a list.
-     * @link https://apidocs.mailchimp.com/api/2.0/lists/member-info.php
-     *
-     * @deprecated
-     * @param  string       $id     The list id to connect to.
-     * @param  array        $emails An array of up to 50 email structs.
-     * @return array
-     */
-    public function listsMemberInfo($id, array $emails)
-    {
-        return $this->getResource('lists')->memberInfo($id, $emails);
-    }
-
-    /**
-     * Add a new merge tag to a given list.
-     * @link https://apidocs.mailchimp.com/api/2.0/lists/merge-var-add.php
-     *
-     * @deprecated
-     * @param  string   $listId
-     * @param  string   $tag
-     * @param  string   $name
-     * @param  array    $options
-     * @return array
-     */
-    public function listsMergeVarAdd($listId, $tag, $name, array $options = [])
-    {
-        return $this->getResource('lists')->mergeVarAdd($listId, $tag, $name, $options);
-    }
-
-    /**
-     * Get the list of merge tags for a given list, including their name, tag, and required setting.
-     * @link https://apidocs.mailchimp.com/api/2.0/lists/merge-vars.php
-     *
-     * @deprecated
-     * @param  array    $listIds
-     * @return array
-     */
-    public function listsMergeVars($listId)
-    {
-        return $this->getResource('lists')->mergeVars($listId);
+        return $this->getResource($name);
     }
 
     /**
@@ -240,7 +145,7 @@ class ApiClientMailchimp extends ApiClientAbstract
     }
 
     /**
-     * Handles (and throws) API exceptions when errors are encountered in the response body.
+     * Handles API exceptions when errors are encountered in the response body.
      *
      * @param  array    $body
      * @return MailchimpResponseException
