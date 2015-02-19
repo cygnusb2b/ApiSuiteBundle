@@ -153,7 +153,7 @@ class ApiClientMailchimp extends ApiClientAbstract
      */
     protected function handleException(array $body)
     {
-        if ('error' !== $result['status'] || !$result['name']) {
+        if ('error' !== $body['status'] || !$body['name']) {
             throw new MailchimpException(sprintf('An unexpected error was received: %s', json_encode($body)));
         }
         return new MailchimpResponseException($body);
