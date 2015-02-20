@@ -147,12 +147,14 @@ class Campaigns extends AbstractResource
      */
     public function schedule($cid, \DateTime $scheduleTime, \DateTime $scheduleTimeB = null)
     {
+        $scheduleTime->setTimezone(new \DateTimeZone('UTC'));
         $format = 'Y-m-d H:i:s';
         $body = [
             'cid'           => $cid,
             'schedule_time' => $scheduleTime->format($format),
         ];
         if (null !== $scheduleTimeB) {
+            $scheduleTimeB->setTimezone(new \DateTimeZone('UTC'));
             $body['schedule_time_b'] = $scheduleTimeB->format($format);
         }
         return $this->sendRequest('schedule', $body);
