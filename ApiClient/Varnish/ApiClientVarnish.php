@@ -15,6 +15,8 @@ class ApiClientVarnish extends ApiClientAbstract
 
     /**
      * Returns the active varnish host
+     *
+     * @return string
      */
     public function getHost()
     {
