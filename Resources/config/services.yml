@@ -83,3 +83,7 @@ services:
     cygnus_api_suite.api_client.brightcove:
         class: %cygnus_api_suite.api_client.brightcove.class%
         parent: cygnus_api_suite.api_client.abstract
+
+    cygnus_api_suite.api_client.varnish:
+        class: Cygnus\ApiSuiteBundle\ApiClient\Varnish\ApiClientVarnish
+        parent: cygnus_api_suite.api_client.abstract

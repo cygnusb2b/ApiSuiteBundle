@@ -512,6 +512,10 @@ class Client
                 'option'    => CURLOPT_NOBODY,
                 'value'     => true,
             ),
+            'PURGE'     => array(
+                'option'    => CURLOPT_CUSTOMREQUEST,
+                'value'     => 'PURGE'
+            )
         );
     }
 
