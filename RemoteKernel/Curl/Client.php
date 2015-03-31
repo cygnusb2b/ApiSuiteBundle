@@ -171,18 +171,7 @@ class Client
         curl_setopt_array($ch, $this->getOptions());
         curl_exec($ch);
 
-        $this->logger->info('Curl: '. $this->request->getUri());
-
-        $curlInfo = curl_getinfo($ch);
-
-        // $this->logger->info('Curl Info: '.json_encode($curlInfo));
-
-        foreach ($curlInfo as $key => $val) {
-            if (is_array($val)) {
-                $val = 'JSON:'.json_encode($val);
-            }
-            $this->logger->info(sprintf("Curl Info: %s: %s", $key, $val));
-        }
+        $this->logger->info(sprintf('Curl Request %s %s', $this->request->getMethod(), $this->request->getUri()));
 
         if (!curl_errno($ch)) {
             $this->handleResponse();
@@ -442,6 +431,7 @@ class Client
         if (array_key_exists($method, $supported)) {
             list($option, $value) = array_values($supported[$method]);
             $this->addOption($option, $value);
+            $this->addOption(CURLOPT_CUSTOMREQUEST, $method);
             return $this;
         } else {
             throw new \Exception(sprintf('Unsupported request method %s specified. Only %s methods are allowed', $method, implode(', ', array_keys($supported))));
