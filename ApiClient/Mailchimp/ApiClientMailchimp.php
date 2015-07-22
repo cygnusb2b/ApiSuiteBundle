@@ -49,6 +49,7 @@ class ApiClientMailchimp extends ApiClientAbstract
             'campaigns' => 'Campaigns',
             'lists'     => 'Lists',
             'templates' => 'Templates',
+            'reports'   => 'Reports',
         ];
         foreach ($resources as $key => $class) {
             $fqcn = sprintf('%s\\%s', $namespace, $class);
