@@ -22,7 +22,16 @@ abstract class RemoteKernelAbstract implements RemoteKernelInterface
     final public function createRequest($uri, $method = 'GET', $parameters = array(), $cookies = array(), $files = array(), $server = array(), $content = null)
     {
         // $this->transformFiles($files);
-        return Request::create($uri, $method, $parameters, $cookies, $files, $server, $content);
+        $request =  Request::create($uri, $method, $parameters, $cookies, $files, $server, $content);
+
+        // Strip default headers to ensure the request is pure.
+        foreach ($request->headers->all() as $key => $value) {
+            if ('host' === $key) {
+                continue;
+            }
+            $request->headers->remove($key);
+        }
+        return $request;
     }
 
     /**
