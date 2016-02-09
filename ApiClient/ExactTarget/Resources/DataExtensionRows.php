@@ -1,5 +1,5 @@
 <?php
-namespace Cygnus\ApiSuiteBundle\ApiClient\ExactTargetFuel\Resources;
+namespace Cygnus\ApiSuiteBundle\ApiClient\ExactTarget\Resources;
 
 use \ET_DataExtension_Row;
 

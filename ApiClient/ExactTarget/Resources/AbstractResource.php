@@ -1,8 +1,8 @@
 <?php
-namespace Cygnus\ApiSuiteBundle\ApiClient\ExactTargetFuel\Resources;
+namespace Cygnus\ApiSuiteBundle\ApiClient\ExactTarget\Resources;
 
-use Cygnus\ApiSuiteBundle\ApiClient\ExactTargetFuel\Exception\ResponseException;
-use Cygnus\ApiSuiteBundle\ApiClient\ExactTargetFuel\ApiClientExactTargetFuel;
+use Cygnus\ApiSuiteBundle\ApiClient\ExactTarget\Exception\ResponseException;
+use Cygnus\ApiSuiteBundle\ApiClient\ExactTarget\ApiClientExactTarget;
 
 abstract class AbstractResource
 {
@@ -12,7 +12,7 @@ abstract class AbstractResource
     protected $key;
 
     /**
-     * @var ApiClientExactTargetFuel
+     * @var ApiClientExactTarget
      */
     protected $root;
 
@@ -25,9 +25,9 @@ abstract class AbstractResource
      * Constructor.
      *
      * @param   string                      $key
-     * @param   ApiClientExactTargetFuel    $root
+     * @param   ApiClientExactTarget    $root
      */
-    public function __construct($key, ApiClientExactTargetFuel $root)
+    public function __construct($key, ApiClientExactTarget $root)
     {
         $this->key = $key;
         $this->root = $root;

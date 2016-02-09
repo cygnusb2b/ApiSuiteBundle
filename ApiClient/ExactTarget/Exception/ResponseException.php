@@ -1,6 +1,6 @@
 <?php
 
-namespace Cygnus\ApiSuiteBundle\ApiClient\ExactTargetFuel\Exception;
+namespace Cygnus\ApiSuiteBundle\ApiClient\ExactTarget\Exception;
 
 use \Exception;
 

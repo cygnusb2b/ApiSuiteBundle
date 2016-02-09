@@ -1,23 +1,21 @@
 <?php
-namespace Cygnus\ApiSuiteBundle\ApiClient\ExactTargetFuel\Resources;
+namespace Cygnus\ApiSuiteBundle\ApiClient\ExactTarget\Resources;
 
-use \ET_DataExtension;
+use \ET_DataExtension_Column;
 
-class DataExtensions extends AbstractResource
+class DataExtensionColumns extends AbstractResource
 {
     /**
      * {@inheritDoc}
      */
     protected function getHandlerObject()
     {
-        return new ET_DataExtension();
+        return new ET_DataExtension_Column();
     }
 
     /**
-     * Use the Get method to return information about existing data extensions.
-     * Optionally, you can set the props property when using the Get method in order to limit the number of fields returned. If you do not define the props property, the call returns all fields.
-     * Optionally, you can set the filter property to limit the number of results returned.
-     * @link https://code.exacttarget.com/apis-sdks/fuel-sdks/data-extensions/data-extension-retrieve.html
+     * Use the Get method to return information about existing data extension columns.
+     * @link https://code.exacttarget.com/apis-sdks/fuel-sdks/data-extension-columns/data-extension-column-retrieve.html
      *
      * @param   array   $props  The properties (fields) to return with the response. An empty value returns all fields.
      * @param   array   $filter A filter consists of three key/value pairs for filtering by property, operator, and value. @see createFilter()
@@ -34,7 +32,7 @@ class DataExtensions extends AbstractResource
     }
 
     /**
-     * Gets a Data Extension by CustomerKey (aka External Key).
+     * Finds data extension columns by the CustomerKey.
      *
      * @param   string  $customerKey
      * @param   array   $props

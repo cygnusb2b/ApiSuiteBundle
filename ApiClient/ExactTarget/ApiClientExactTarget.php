@@ -1,14 +1,14 @@
 <?php
 
-namespace Cygnus\ApiSuiteBundle\ApiClient\ExactTargetFuel;
+namespace Cygnus\ApiSuiteBundle\ApiClient\ExactTarget;
 
 use \ET_Client;
-use Cygnus\ApiSuiteBundle\ApiClient\ExactTargetFuel\Resources\AbstractResource;
+use Cygnus\ApiSuiteBundle\ApiClient\ExactTarget\Resources\AbstractResource;
 use Symfony\Component\HttpFoundation\ParameterBag;
 
 require_once 'SDK/ET_Client.php';
 
-class ApiClientExactTargetFuel
+class ApiClientExactTarget
 {
     /**
      * The configuration options.
@@ -52,7 +52,7 @@ class ApiClientExactTargetFuel
      */
     protected function setResources()
     {
-        $namespace = 'Cygnus\\ApiSuiteBundle\\ApiClient\\ExactTargetFuel\\Resources';
+        $namespace = 'Cygnus\\ApiSuiteBundle\\ApiClient\\ExactTarget\\Resources';
         $resources = [
             'data-extensions'           => 'DataExtensions',
             'data-extension-columns'    => 'DataExtensionColumns',
