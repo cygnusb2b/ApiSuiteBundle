@@ -37,11 +37,14 @@ class DataExtensionRows extends AbstractResource
      * Creates a new row in the data extension.
      *
      * @param   string  $extensionKey   The Data Extension CustomerKey (aka External Key).
+     * @param   string  $primaryKey     The primary field key of the extension, usually an email field of some kind.
+     * @param   string  $value          The primary field value to match. Ensures a unique row is inserted.
      * @param   array   $props          The properties to send: an array of field key/values.
      * @return  \ET_Post
      */
-    public function create($extensionKey, array $props)
+    public function create($extensionKey, $primaryKey, $value, array $props)
     {
+        $props[$primaryKey] = $value;
         $handler = $this->getHandler();
         $handler->CustomerKey = $extensionKey;
         $handler->props = $props;
@@ -49,17 +52,36 @@ class DataExtensionRows extends AbstractResource
     }
 
     /**
+     * Updates a row in the data extension.
+     * The props must contain the primary key and value in order to match the proper record.
+     *
+     * @param   string  $extensionKey   The Data Extension CustomerKey (aka External Key).
+     * @param   string  $primaryKey     The primary field key of the extension, usually an email field of some kind.
+     * @param   string  $value          The primary field value to match. Selects the row for update.
+     * @param   array   $props          The properties to send: an array of field key/values.
+     * @return  \ET_Post
+     */
+    public function update($extensionKey, $primaryKey, $value, array $props)
+    {
+        $props[$primaryKey] = $value;
+        $handler = $this->getHandler();
+        $handler->CustomerKey = $extensionKey;
+        $handler->props = $props;
+        return $this->handleResponse($handler->patch());
+    }
+
+    /**
      * Deletes a row in the data extension.
      *
-     * @param   string  $extensionName  The Data Extension Name..
+     * @param   string  $extensionKey   The Data Extension CustomerKey (aka External Key).
      * @param   string  $primaryKey     The primary field key of the extension, usually an email field of some kind.
      * @param   string  $value          The primary field value to match. Selects the row for deletion.
      * @return  \ET_Post
      */
-    public function delete($extensionName, $primaryKey, $value)
+    public function delete($extensionKey, $primaryKey, $value)
     {
         $handler = $this->getHandler();
-        $handler->Name = $extensionName;
+        $handler->CustomerKey = $extensionKey;
         $handler->props = [$primaryKey => $value];
         return $handler->delete();
     }
