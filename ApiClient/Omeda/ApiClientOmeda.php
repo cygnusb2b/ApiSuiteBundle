@@ -371,6 +371,70 @@ class ApiClientOmeda extends ApiClientAbstract
     }
 
     /**
+     * The Deployment Cancel API provides the ability to cancel a deployment. Please be warned, once cancelled, a deployment will not be sent and cannot be edited further. If you need to unschedule a deployment and continue editing, please see the Deployment Unschedule API.
+     * https://jira.omeda.com/wiki/en/Deployment_Cancel_Resource
+     *
+     * @param  string $trackId The Omail TrackId for the desired deployment
+     * @param  string $userId UserId of the omail account authorized for this deployment. This is generally the 'OwnerUserId' specified in the Deployment Api
+     * @return Symfony\Component\HttpFoundation\Response
+     */
+    public function omailDeploymentCancel($trackId, $userId)
+    {
+        $endpoint = '/omail/deployment/cancel/*';
+        $requestBody = ['UserId' => $userId, 'TrackId' => $trackId];
+        return $this->handleRequest($endpoint, $requestBody, 'POST');
+    }
+
+    /**
+     * The Deployment Service API provides the ability to post/put deployment information to Omail. This information is used to either create a new Omail deployment, or update an existing Omail deployment. Deployment information is validated for basic information.
+     * https://jira.omeda.com/wiki/en/Deployment_Service
+     *
+     * @param  array|string $requestBody The request body to send to the API
+     * @return Symfony\Component\HttpFoundation\Response
+     */
+    public function omailDeploymentCreate($requestBody)
+    {
+        $endpoint = '/omail/deployment/*';
+        return $this->handleRequest($endpoint, $requestBody, 'POST');
+    }
+
+    /**
+     * The Deployment Service API provides the ability to post/put deployment information to Omail. This information is used to either create a new Omail deployment, or update an existing Omail deployment. Deployment information is validated for basic information.
+     * https://jira.omeda.com/wiki/en/Deployment_Service
+     *
+     * @param  array|string $requestBody The request body to send to the API
+     * @return Symfony\Component\HttpFoundation\Response
+     */
+    public function omailDeploymentUpdate($requestBody)
+    {
+        $endpoint = '/omail/deployment/*';
+        return $this->handleRequest($endpoint, $requestBody, 'PUT');
+    }
+
+    /**
+     * The Deployment Content API provides the ability to post information to a deployment. These fields can include the 'Subject' line of the email, the 'From Name' of the email, the HTML content, the Text content, etc. Since we are passing in html data in this resource, xml is the default format for requests and responses.
+     * https://jira.omeda.com/wiki/en/Deployment_Content_Resource
+     *
+     * @param  array|string $requestBody The request body to send to the API
+     * @return Symfony\Component\HttpFoundation\Response
+     */
+    public function omailDeploymentContent($requestBody)
+    {
+        $elements = [];
+        foreach ($requestBody as $key => $value) {
+            if (is_string($value)) {
+                $value = str_replace(']]>', htmlentities(']]>'), $value);
+                $value = sprintf('<![CDATA[%s]]>', $value);
+            }
+            $elements[] = sprintf('<%s>%s</%s>', $key, $value, $key);
+        }
+
+        $xml = sprintf('<Deployment>%s</Deployment>', implode("\n", $elements));
+        $endpoint = '/omail/deployment/content/*';
+        return $this->handleRequest($endpoint, $xml, 'POST', false, 'text/xml');
+    }
+
+    /**
      * The Deployment Lookup API provides the ability to retrieve deployment split content
      *
      * @param  string $trackId  The Omail TrackId for the desired deployment
@@ -404,11 +468,12 @@ class ApiClientOmeda extends ApiClientAbstract
      * @param  mixed  $content    The request body content to use
      * @param  string $method     The request method
      * @param  bool   $clientCall Whether this is an API that applies to the entire customer/client
+     * @param  string $contentType The request content type
      * @return Symfony\Component\HttpFoundation\Response
      */
-    protected function handleRequest($endpoint, $content = null, $method = 'GET', $clientCall = false)
+    protected function handleRequest($endpoint, $content = null, $method = 'GET', $clientCall = false, $contentType = 'application/json')
     {
-        $request = $this->createRequest($endpoint, $content, $method, $clientCall);
+        $request = $this->createRequest($endpoint, $content, $method, $clientCall, $contentType);
         return $this->doRequest($request);
     }
 
@@ -420,10 +485,11 @@ class ApiClientOmeda extends ApiClientAbstract
      * @param  mixed  $content    The request body content to use
      * @param  string $method     The request method
      * @param  bool   $clientCall Whether this is an API that applies to the entire customer/client
+     * @param  string $contentType The request content type
      * @return Symfony\Component\HttpFoundation\Request
      * @throws \Exception If the API configuration is invalid, or a non-allowed request method is passed
      */
-    protected function createRequest($endpoint, $content = null, $method = 'GET', $clientCall = false)
+    protected function createRequest($endpoint, $content = null, $method = 'GET', $clientCall = false, $contentType = 'application/json')
     {
         if ($this->hasValidConfig()) {
 
@@ -436,7 +502,7 @@ class ApiClientOmeda extends ApiClientAbstract
             // Handle the request body content
             if (is_scalar($content)) {
                 $content = (string) $content;
-            } elseif (is_array($content)) {
+            } elseif (is_array($content) && 'application/json' === $contentType) {
                 $content = @json_encode($content);
             }
 
@@ -449,11 +515,13 @@ class ApiClientOmeda extends ApiClientAbstract
             // Add additional headers based on request method
             if (in_array($method, $this->modifyingMethods)) {
                 $headers['x-omeda-inputid'] = $this->getInputId();
-                $headers['Content-Type'] = 'application/json';
+                $headers['Content-Type'] = $contentType;
             }
 
             // Add the headers to the request
             $request->headers->add($headers);
+
+
 
             return $request;
         } else {
