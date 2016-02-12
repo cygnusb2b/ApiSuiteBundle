@@ -412,6 +412,20 @@ class ApiClientOmeda extends ApiClientAbstract
     }
 
     /**
+     * The Deployment Test API provides the ability to send test copies of your deployment to the test recipients that were specified when the deployment was created. Test recipients are optional and can be added to a deployment via the Deployment Api. A Deployment Test Resource api call is required before Scheduling a deployment.
+     * https://jira.omeda.com/wiki/en/Deployment_Test_Resource
+     *
+     * @param  array|string $requestBody The request body to send to the API
+     * @return Symfony\Component\HttpFoundation\Response
+     */
+    public function omailDeploymentTest($trackId, $userId)
+    {
+        $requestBody = ['TrackId' => $trackId, 'UserId' => $userId];
+        $endpoint = '/omail/deployment/sendtest/*';
+        return $this->handleRequest($endpoint, $requestBody, 'POST');
+    }
+
+    /**
      * The Deployment Content API provides the ability to post information to a deployment. These fields can include the 'Subject' line of the email, the 'From Name' of the email, the HTML content, the Text content, etc. Since we are passing in html data in this resource, xml is the default format for requests and responses.
      * https://jira.omeda.com/wiki/en/Deployment_Content_Resource
      *
@@ -458,6 +472,19 @@ class ApiClientOmeda extends ApiClientAbstract
     public function omailDeploymentSearch($requestBody)
     {
         $endpoint = '/omail/deployment/search/*';
+        return $this->handleRequest($endpoint, $requestBody, 'POST');
+    }
+
+    /**
+     * The Deployment API allows our clients to send a single Omail email deployment.
+     * https://jira.omeda.com/wiki/en/On_Demand_Send_API
+     *
+     * @param   array|string    $requestBody
+     * @return  Symfony\Component\HttpFoundation\Response
+     */
+    public function omailOnDemandSend($requestBody)
+    {
+        $endpoint = '/omail/deployemails/*';
         return $this->handleRequest($endpoint, $requestBody, 'POST');
     }
 
