@@ -399,6 +399,39 @@ class ApiClientOmeda extends ApiClientAbstract
     }
 
     /**
+     * The Deployment Schedule API provides the ability to schedule a deployment for sending. Once scheduled, a deployment is queued to send and will send at the specified time. Before a deployment can be scheduled, the a test deployment must be sent using the Deployment Test. Once you schedule a deployment, you can unschedule the deployment at any time before the deployment is deployed to recipients. Accordingly, if you wish to change the scheduled date for a currently scheduled deployment, you will need to unschedule the deployment and then make another Deployment Schedule Api call with the new date you prefer.
+     * https://jira.omeda.com/wiki/en/Deployment_Schedule_Resource
+     *
+     * @param   string          $trackId
+     * @param   string          $userId
+     * @param   \DateTime|null  $date   The date to schedule for. If null, will schedule immediately.
+     * @return  Symfony\Component\HttpFoundation\Response
+     */
+    public function omailDeploymentSchedule($trackId, $userId, \DateTime $date = null)
+    {
+        $requestBody = [
+            'TrackId'   => $trackId,
+            'UserId'    => $userId,
+            'ScheduledDate' => (null === $date) ? '[NOW]' : $date->format('Y-m-d H:i'),
+        ];
+        $endpoint = '/omail/deployment/schedule/*';
+        return $this->handleRequest($endpoint, $requestBody, 'POST');
+    }
+
+    /**
+     * The Deployment Add Audience API provides the ability add a previously uploaded list of customers to a deployment (See Deployment Audience List FTP for information on uploading a list into the Omail system). API generated deployments are only allowed 1 split, which must have 1 list assigned and no more.
+     * https://jira.omeda.com/wiki/en/Deployment_Add_Audience_Service
+     *
+     * @param  array|string $requestBody The request body to send to the API
+     * @return Symfony\Component\HttpFoundation\Response
+     */
+    public function omailDeploymentAddAudience($requestBody)
+    {
+        $endpoint = '/omail/deployment/audience/add/*';
+        return $this->handleRequest($endpoint, $requestBody, 'POST');
+    }
+
+    /**
      * The Deployment Service API provides the ability to post/put deployment information to Omail. This information is used to either create a new Omail deployment, or update an existing Omail deployment. Deployment information is validated for basic information.
      * https://jira.omeda.com/wiki/en/Deployment_Service
      *
@@ -609,6 +642,26 @@ class ApiClientOmeda extends ApiClientAbstract
     public function getHost()
     {
         return trim($this->config->get('host'), '/');
+    }
+
+    /**
+     * Determines if this is the Omeda production environment.
+     *
+     * @return  bool
+     */
+    public function isProduction()
+    {
+        return 'ows.omeda.com' === $this->getHost();
+    }
+
+    /**
+     * Determines if this is the Omeda staging environment.
+     *
+     * @return  bool
+     */
+    public function isStaging()
+    {
+        return false === $this->isProduction();
     }
 
     /**
