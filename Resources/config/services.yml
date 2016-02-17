@@ -56,6 +56,10 @@ services:
 
     cygnus_api_suite.api_client.exact_target:
         class: %cygnus_api_suite.api_client.exact_target.class%
+        calls:
+            - [setLogger, [@logger]]
+        tags:
+            - { name: monolog.logger, channel: api_suite.exact_target}
 
     cygnus_api_suite.api_client.omeda:
         class: %cygnus_api_suite.api_client.omeda.class%

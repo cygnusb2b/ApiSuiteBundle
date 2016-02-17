@@ -24,6 +24,7 @@ class Subscribers extends AbstractResource
      */
     public function get(array $props = [], array $filter = [])
     {
+        $this->log($props);
         $handler = $this->getHandler();
         $handler->props = $props;
         if (!empty($filter)) {

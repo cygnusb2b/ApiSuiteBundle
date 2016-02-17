@@ -5,6 +5,7 @@ namespace Cygnus\ApiSuiteBundle\ApiClient\ExactTarget;
 use \ET_Client;
 use Cygnus\ApiSuiteBundle\ApiClient\ExactTarget\Resources\AbstractResource;
 use Symfony\Component\HttpFoundation\ParameterBag;
+use Symfony\Bridge\Monolog\Logger;
 
 require_once 'SDK/ET_Client.php';
 
@@ -25,6 +26,11 @@ class ApiClientExactTarget
     protected $client;
 
     /**
+     * @var Logger
+     */
+    protected $logger;
+
+    /**
      * An array of required configuration options
      *
      * @var array
@@ -43,6 +49,18 @@ class ApiClientExactTarget
     {
         $this->setConfig($config);
         $this->setResources();
+    }
+
+    public function setLogger(Logger $logger)
+    {
+        $this->logger = $logger;
+    }
+
+    public function log($message, $level = 'info')
+    {
+        if (null !== $this->logger) {
+            $this->logger->log($level, $message);
+        }
     }
 
     /**
