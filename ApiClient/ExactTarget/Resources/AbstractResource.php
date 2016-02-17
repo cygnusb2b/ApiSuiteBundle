@@ -33,6 +33,23 @@ abstract class AbstractResource
         $this->root = $root;
     }
 
+    protected function log($parameters = null)
+    {
+        $callee = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)[1];
+        $class = explode('\\', $callee['class']);
+        $callee = sprintf('%s%s%s', array_pop($class), $callee['type'], $callee['function']);
+
+        $message = $callee;
+        if (is_scalar($parameters)) {
+            $message = sprintf('%s: `%s`', $message, $parameters);
+        } elseif (is_array($parameters)) {
+            $message = sprintf('%s: %s', $message, json_encode($parameters));
+        } else {
+            $message = sprintf('%s: [%s]', $message, gettype($parameters));
+        }
+        $this->root->log($message);
+    }
+
     /**
      * Creates an API resource get filter.
      *

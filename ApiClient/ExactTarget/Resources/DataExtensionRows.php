@@ -24,6 +24,7 @@ class DataExtensionRows extends AbstractResource
      */
     public function get($extensionName, array $props = [], array $filter = [])
     {
+        $this->log($extensionName);
         $handler = $this->getHandler();
         $handler->Name = $extensionName;
         $handler->props = $props;
@@ -44,6 +45,7 @@ class DataExtensionRows extends AbstractResource
      */
     public function create($extensionKey, $primaryKey, $value, array $props)
     {
+        $this->log($extensionKey);
         $props[$primaryKey] = $value;
         $handler = $this->getHandler();
         $handler->CustomerKey = $extensionKey;
@@ -63,6 +65,7 @@ class DataExtensionRows extends AbstractResource
      */
     public function update($extensionKey, $primaryKey, $value, array $props)
     {
+        $this->log($extensionKey);
         $props[$primaryKey] = $value;
         $handler = $this->getHandler();
         $handler->CustomerKey = $extensionKey;
@@ -80,6 +83,7 @@ class DataExtensionRows extends AbstractResource
      */
     public function delete($extensionKey, $primaryKey, $value)
     {
+        $this->log($extensionKey);
         $handler = $this->getHandler();
         $handler->CustomerKey = $extensionKey;
         $handler->props = [$primaryKey => $value];

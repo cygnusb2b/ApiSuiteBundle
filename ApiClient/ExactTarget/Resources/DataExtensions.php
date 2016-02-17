@@ -25,6 +25,7 @@ class DataExtensions extends AbstractResource
      */
     public function get(array $props = [], array $filter = [])
     {
+        $this->log($props);
         $handler = $this->getHandler();
         $handler->props = $props;
         if (!empty($filter)) {
@@ -42,6 +43,7 @@ class DataExtensions extends AbstractResource
      */
     public function getByCustomerKey($customerKey, array $props = [])
     {
+        $this->log($customerKey);
         $filter = $this->createFilter('CustomerKey', 'equals', $customerKey);
         return $this->get($props, $filter);
     }
