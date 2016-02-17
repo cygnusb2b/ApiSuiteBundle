@@ -419,6 +419,24 @@ class ApiClientOmeda extends ApiClientAbstract
     }
 
     /**
+     * The Deployment Unschedule API provides the ability to unschedule a deployment, perhaps to allow further editing. A deployment can be unscheduled anytime before the user-defined deployment date. A deployment that is unscheduled will not be sent until a new Deployment Schedule Api call is made.
+     * https://jira.omeda.com/wiki/en/Deployment_Unschedule_Resource
+     *
+     * @param   string          $trackId
+     * @param   string          $userId
+     * @return  Symfony\Component\HttpFoundation\Response
+     */
+    public function omailDeploymentUnschedule($trackId, $userId)
+    {
+        $requestBody = [
+            'TrackId'   => $trackId,
+            'UserId'    => $userId,
+        ];
+        $endpoint = '/omail/deployment/unschedule/*';
+        return $this->handleRequest($endpoint, $requestBody, 'POST');
+    }
+
+    /**
      * The Deployment Add Audience API provides the ability add a previously uploaded list of customers to a deployment (See Deployment Audience List FTP for information on uploading a list into the Omail system). API generated deployments are only allowed 1 split, which must have 1 list assigned and no more.
      * https://jira.omeda.com/wiki/en/Deployment_Add_Audience_Service
      *
