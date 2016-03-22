@@ -450,6 +450,19 @@ class ApiClientOmeda extends ApiClientAbstract
     }
 
     /**
+     * The List Assignment Status API provides the ability to get the status of a customer list that is currently being assigned from the Omail FTP Site to a deployment. For more information on triggering the assignment process, please see Deployment Audience Service.
+     * https://jira.omeda.com/wiki/en/Audience_Assignment_Status_Service
+     *
+     * @param  int          $listId     The list id to look up
+     * @return Symfony\Component\HttpFoundation\Response
+     */
+    public function omailAudienceAssignmentStatus($listId)
+    {
+        $endpoint = sprintf('/omail/deployment/audience/status/%s/*', $listId);
+        return $this->handleRequest($endpoint, null, 'GET');
+    }
+
+    /**
      * The Deployment Service API provides the ability to post/put deployment information to Omail. This information is used to either create a new Omail deployment, or update an existing Omail deployment. Deployment information is validated for basic information.
      * https://jira.omeda.com/wiki/en/Deployment_Service
      *
