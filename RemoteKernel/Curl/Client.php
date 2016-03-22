@@ -167,11 +167,14 @@ class Client
      */
     private function performRequest()
     {
+        $start = microtime(true);
+        $this->logger->info(sprintf('Curl Request STARTED  %s %s', $this->request->getMethod(), $this->request->getUri()));
+
         $ch = $this->getHandle();
         curl_setopt_array($ch, $this->getOptions());
         curl_exec($ch);
 
-        $this->logger->info(sprintf('Curl Request %s %s', $this->request->getMethod(), $this->request->getUri()));
+        $this->logger->info(sprintf('Curl Request FINISHED %s %s in %sms', $this->request->getMethod(), $this->request->getUri(), number_format(microtime(true) - $start, 2)));
 
         if (!curl_errno($ch)) {
             $this->handleResponse();
@@ -572,7 +575,11 @@ class Client
     {
         $ch = $this->getHandle();
         $this->options = array();
-        // curl_reset($this->getHandle()) # Available in PHP 5.5
+
+        # Available in PHP 5.5
+        if (function_exists('curl_reset')) {
+            curl_reset($this->getHandle());
+        }
 
         // Unset any previously sent POST fields
         curl_setopt($ch, CURLOPT_POSTFIELDS, '');
