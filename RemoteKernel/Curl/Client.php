@@ -172,7 +172,6 @@ class Client
 
         $ch = $this->getHandle();
         curl_setopt_array($ch, $this->getOptions());
-        xdebug_break();
         curl_exec($ch);
 
         $this->logger->info(sprintf('Curl Request FINISHED %s %s in %sms', $this->request->getMethod(), $this->request->getUri(), number_format(microtime(true) - $start, 2)));
