@@ -576,7 +576,11 @@ class Client
     {
         $ch = $this->getHandle();
         $this->options = array();
-        // curl_reset($this->getHandle()) # Available in PHP 5.5
+
+        # Available in PHP 5.5
+        if (function_exists('curl_reset')) {
+            curl_reset($this->getHandle());
+        }
 
         // Unset any previously sent POST fields
         curl_setopt($ch, CURLOPT_POSTFIELDS, '');
