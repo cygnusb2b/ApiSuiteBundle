@@ -22,13 +22,13 @@ services:
         class: %cygnus_api_suite.curl.processor.body.class%
     cygnus_api_suite.curl.client:
         class: %cygnus_api_suite.curl.client.class%
-        arguments: [@cygnus_api_suite.curl.header_processor, @cygnus_api_suite.curl.body_processor, @logger]
+        arguments: ["@cygnus_api_suite.curl.header_processor", "@cygnus_api_suite.curl.body_processor", "@logger"]
         tags:
             - { name: monolog.logger, channel: api_suite}
 
     cygnus_api_suite.abstract.kernel:
         abstract: true
-        arguments: [ @cygnus_api_suite.curl.client ]
+        arguments: [ "@cygnus_api_suite.curl.client" ]
 
     cygnus_api_suite.curl.kernel:
         parent: cygnus_api_suite.abstract.kernel
@@ -41,7 +41,7 @@ services:
     cygnus_api_suite.api_client.abstract:
         abstract: true
         calls:
-             - [setRemoteHttpKernel, [@cygnus_api_suite.curl.kernel]]
+             - [setRemoteHttpKernel, ["@cygnus_api_suite.curl.kernel"]]
 
     cygnus_api_suite.api_client.mailchimp:
         class: %cygnus_api_suite.api_client.mailchimp.class%
@@ -57,7 +57,7 @@ services:
     cygnus_api_suite.api_client.exact_target:
         class: %cygnus_api_suite.api_client.exact_target.class%
         calls:
-            - [setLogger, [@logger]]
+            - [setLogger, ["@logger"]]
         tags:
             - { name: monolog.logger, channel: api_suite.exact_target}
 
@@ -69,7 +69,7 @@ services:
         class: %cygnus_api_suite.api_client.openx.class%
         parent: cygnus_api_suite.api_client.abstract
         calls:
-             - [setRemoteHttpKernel, [@cygnus_api_suite.oauth.kernel]]
+             - [setRemoteHttpKernel, ["@cygnus_api_suite.oauth.kernel"]]
 
 
     cygnus_api_suite.api_client.base2:
