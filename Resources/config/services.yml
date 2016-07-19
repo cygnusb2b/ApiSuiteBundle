@@ -3,6 +3,7 @@ parameters:
     cygnus_api_suite.curl.client.class: Cygnus\ApiSuiteBundle\RemoteKernel\Curl\Client
     cygnus_api_suite.curl.processor.header.class: Cygnus\ApiSuiteBundle\RemoteKernel\Curl\Processor\ResponseHeaderProcessor
     cygnus_api_suite.curl.processor.body.class: Cygnus\ApiSuiteBundle\RemoteKernel\Curl\Processor\ResponseBodyProcessor
+    cygnus_api_suite.api_client.google_youtube.class: Cygnus\ApiSuiteBundle\ApiClient\Google\ApiClientYoutube
     cygnus_api_suite.api_client.google.geocode.class: Cygnus\ApiSuiteBundle\ApiClient\Google\ApiClientGeoCode
     cygnus_api_suite.api_client.omeda.class: Cygnus\ApiSuiteBundle\ApiClient\Omeda\ApiClientOmeda
     cygnus_api_suite.api_client.openx.class: Cygnus\ApiSuiteBundle\ApiClient\OpenX\ApiClientOpenX
@@ -45,6 +46,10 @@ services:
 
     cygnus_api_suite.api_client.mailchimp:
         class: %cygnus_api_suite.api_client.mailchimp.class%
+        parent: cygnus_api_suite.api_client.abstract
+
+    cygnus_api_suite.api_client.google_youtube:
+        class: %cygnus_api_suite.api_client.google_youtube.class%
         parent: cygnus_api_suite.api_client.abstract
 
     cygnus_api_suite.api_client.google.geocode:
