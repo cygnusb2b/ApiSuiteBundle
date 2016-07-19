@@ -8,16 +8,7 @@ use Symfony\Component\HttpFoundation\ParameterBag;
 class ApiClientYoutube extends ApiClientAbstract
 {
     /**
-     * The configuration options.
-     *
-     * @var ParameterBag
-     */
-    protected $config;
-
-    /**
-     * An array of required configuration options
-     *
-     * @var array
+     * {@inheritdoc}
      */
     protected $requiredConfigOptions = [
         'key',
@@ -34,15 +25,29 @@ class ApiClientYoutube extends ApiClientAbstract
     }
 
     /**
-     * Retrieves videos from a playlist
+     * Retrieves videos from a playlist.
+     * Pagination must be handled outside this method using `pageToken`
+     * fields from the api response.
+     *
+     * @see     https://developers.google.com/youtube/v3/docs/playlistItems/list
+     *
+     * @param   array   $criteria   The parameters to be included with the request
+     * @param   array   $fields     Field groups to be included in the response. See documentation
+     * @param   array   $sort       The order the return items in
+     * @param   int     $limit      The number of items to return. Maximum of 50 enforced server-side.
+     *
+     * @throws  InvalidArgumentException    If the playlistId criteria was not specified.
+     * @throws  OutOfBoundsException        If attempting to use a $limit beyond 50.
+     *
+     * @return  Symfony\Component\HttpFoundation\Response
      */
-    public function retrievePlaylistVideos(array $criteria = [], array $fields = [], array $sort = [], $limit = 50, $skip = 0)
+    public function retrievePlaylistVideos(array $criteria = [], array $fields = [], array $sort = [], $limit = 50)
     {
         if (!isset($criteria['playlistId'])) {
-            throw new \InvalidArgumentException(sprintf('`playlistId` is a required parameter for %s!', __METHOD__));
+            throw new \InvalidArgumentException('`playlistId` is a required parameter!');
         }
 
-        $criteria = $this->prepareCriteria($criteria, $fields, $sort, $limit, $skip);
+        $criteria = $this->prepareCriteria($criteria, $fields, $sort, $limit);
         $request = $this->httpKernel->createSimpleRequest(
             'https://www.googleapis.com/youtube/v3/playlistItems',
             'GET',
@@ -51,7 +56,12 @@ class ApiClientYoutube extends ApiClientAbstract
         return $this->doRequest($request);
     }
 
-    private function prepareCriteria(array $criteria = [], array $fields = [], array $sort = [], $limit = 50, $skip = 0)
+    /**
+     * Merges sort, limit parameters into query criteria. Enforces the API key injection
+     *
+     * @return  array
+     */
+    private function prepareCriteria(array $criteria = [], array $fields = [], array $sort = [], $limit = 50)
     {
         // Limit
         if ($limit > 50) {
