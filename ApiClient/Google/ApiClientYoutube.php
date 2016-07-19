@@ -34,21 +34,6 @@ class ApiClientYoutube extends ApiClientAbstract
     }
 
     /**
-     * Sets the configuration options for this API client
-     *
-     * @param   array   $config     The config options
-     * @return  self
-     */
-    public function setConfig(array $config)
-    {
-        $this->config = new ParameterBag($config);
-        if (false === $this->config->has('key')) {
-            $this->config->set('key', 'AIzaSyDtUkfih-g1ENcZd-_I7rwE89X_eB-mn3w');
-        }
-        return $this;
-    }
-
-    /**
      * Retrieves videos from a playlist
      */
     public function retrievePlaylistVideos(array $criteria = [], array $fields = [], array $sort = [], $limit = 50, $skip = 0)
