@@ -2,13 +2,9 @@
 namespace Cygnus\ApiSuiteBundle\ApiClient\BasePlatform;
 
 use Cygnus\ApiSuiteBundle\ApiClient\ApiClientAbstract;
-use Cygnus\ApiSuiteBundle\ApiClient\CacheableInterface;
-use Cygnus\ApiSuiteBundle\Traits\CacheTraitRedis;
 
-class ApiClientBasePlatform extends ApiClientAbstract implements CacheableInterface
+class ApiClientBasePlatform extends ApiClientAbstract
 {
-    use CacheTraitRedis;
-
     const BASE_ENDPOINT = 'api/2.0rcpi';
 
     /**
@@ -37,10 +33,12 @@ class ApiClientBasePlatform extends ApiClientAbstract implements CacheableInterf
     }
 
     /**
-     * Performs a contract search against the sales tool api
+     * Performs a lookup for a contract against the platform search API
      *
-     * @param  string $search The search string to pass
-     * @return array  The decodeed json response
+     * @param  string $search   The search string to pass
+     * @param  array  $$fields  Fields to include in the response
+     *
+     * @return array  The decoded json response
      */
     public function contractsLookup($queryString, array $fields = [])
     {
@@ -68,28 +66,22 @@ class ApiClientBasePlatform extends ApiClientAbstract implements CacheableInterf
      * Handles a request by creating a Request object and sending it to the Kernel
      *
      * @param  string $endpoint   The API endpoint
-     * @param  array  $parameters The request parameters
      * @param  string $method     The request method
+     * @param  array  $parameters The request parameters
+     * @param  string $content    The request body
+     *
      * @return Symfony\Component\HttpFoundation\Response
      */
-    protected function handleRequest($endpoint, $method = 'GET', array $parameters = [], $content = null, $ttl = 0)
+    protected function handleRequest($endpoint, $method = 'GET', array $parameters = [], $content = null)
     {
         $request = $this->createRequest($endpoint, $method, $parameters, $content);
-
-        // Generate Cache Key
-        $cacheKey = $this->generateCacheKey($request);
-
-        if (!is_null($parsedResponse = $this->getCache($cacheKey))) {
-            // Parsed response found in cache. Return it.
-            // return $parsedResponse;
-        }
 
         // Only perform retries for non-modifying methods
         $retryLimit = (in_array($method, array('GET', 'OPTIONS', 'HEAD')))
             ? 3
             : 0;
 
-        return $this->retry(function() use($request, $cacheKey, $ttl) {
+        return $this->retry(function() use($request) {
 
             // Get the API response object
             $response = $this->doRequest($request);
@@ -111,8 +103,6 @@ class ApiClientBasePlatform extends ApiClientAbstract implements CacheableInterf
             } elseif ($response->isSuccessful()) {
                 // Ok. Parse JSON response, cache and return
                 $parsedResponse = @json_decode($response->getContent(), true);
-
-                $this->setCache($cacheKey, $parsedResponse, $ttl);
                 return $parsedResponse;
             }
         }, $retryLimit);
@@ -123,8 +113,10 @@ class ApiClientBasePlatform extends ApiClientAbstract implements CacheableInterf
      * This should return a Response object
      *
      * @param  string $endpoint   The API endpoint
-     * @param  array  $parameters The request parameters
      * @param  string $method     The request method
+     * @param  array  $parameters The request parameters
+     * @param  string $content    The request body
+     *
      * @return Symfony\Component\HttpFoundation\Request
      * @throws \Exception If the API configuration is invalid, or a non-allowed request method is passed
      */

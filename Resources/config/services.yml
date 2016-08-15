@@ -87,8 +87,6 @@ services:
     cygnus_api_suite.api_client.base_platform:
         class: %cygnus_api_suite.api_client.base_platform.class%
         parent: cygnus_api_suite.api_client.abstract
-        tags:
-            - { name: cygnus_api_suite.cacheable }
 
     cygnus_api_suite.api_client.media:
         class: %cygnus_api_suite.api_client.media.class%
