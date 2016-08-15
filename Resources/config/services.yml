@@ -12,6 +12,7 @@ parameters:
     cygnus_api_suite.api_client.mailchimp.class: Cygnus\ApiSuiteBundle\ApiClient\Mailchimp\ApiClientMailchimp
     cygnus_api_suite.api_client.brightcove.class: Cygnus\ApiSuiteBundle\ApiClient\Brightcove\ApiClientBrightcove
     cygnus_api_suite.api_client.base2.class: Cygnus\ApiSuiteBundle\ApiClient\Base2\ApiClientBase2
+    cygnus_api_suite.api_client.base_platform.class: Cygnus\ApiSuiteBundle\ApiClient\BasePlatform\ApiClientBasePlatform
     cygnus_api_suite.api_client.media.class: Cygnus\ApiSuiteBundle\ApiClient\Media\ApiClientMedia
     cygnus_api_suite.api_client.merrick.class: Cygnus\ApiSuiteBundle\ApiClient\Merrick\ApiClientMerrick
     cygnus_api_suite.oauth.kernel.class: Cygnus\ApiSuiteBundle\RemoteKernel\OAuth1a\RemoteKernel
@@ -82,6 +83,10 @@ services:
         parent: cygnus_api_suite.api_client.abstract
         tags:
             - { name: cygnus_api_suite.cacheable }
+
+    cygnus_api_suite.api_client.base_platform:
+        class: %cygnus_api_suite.api_client.base_platform.class%
+        parent: cygnus_api_suite.api_client.abstract
 
     cygnus_api_suite.api_client.media:
         class: %cygnus_api_suite.api_client.media.class%
