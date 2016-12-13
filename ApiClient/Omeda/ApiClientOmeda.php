@@ -509,7 +509,7 @@ class ApiClientOmeda extends ApiClientAbstract
 
         $xml = sprintf('<Deployment>%s</Deployment>', implode("\n", $elements));
         $endpoint = '/omail/deployment/content/*';
-        return $this->handleRequest($endpoint, $xml, 'POST', false, 'text/xml');
+        return $this->handleRequest($endpoint, $xml, 'POST', false, 'text/xml; charset=utf8');
     }
 
     /**
