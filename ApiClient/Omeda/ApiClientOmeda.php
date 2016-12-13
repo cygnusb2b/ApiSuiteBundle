@@ -496,7 +496,7 @@ class ApiClientOmeda extends ApiClientAbstract
      * @param  array|string $requestBody The request body to send to the API
      * @return Symfony\Component\HttpFoundation\Response
      */
-    public function omailDeploymentContent($requestBody)
+    public function omailDeploymentContent($requestBody, $charset = 'utf8')
     {
         $elements = [];
         foreach ($requestBody as $key => $value) {
@@ -509,7 +509,7 @@ class ApiClientOmeda extends ApiClientAbstract
 
         $xml = sprintf('<Deployment>%s</Deployment>', implode("\n", $elements));
         $endpoint = '/omail/deployment/content/*';
-        return $this->handleRequest($endpoint, $xml, 'POST', false, 'text/xml; charset=utf8');
+        return $this->handleRequest($endpoint, $xml, 'POST', false, sprintf('text/xml; charset=%s', $charset));
     }
 
     /**
