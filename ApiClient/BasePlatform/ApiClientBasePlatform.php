@@ -153,7 +153,7 @@ class ApiClientBasePlatform extends ApiClientAbstract
      */
     public function getUri($endpoint)
     {
-        return sprintf('http://%s/%s/%s', $this->getHost(), self::BASE_ENDPOINT, ltrim($endpoint, '/'));
+        return sprintf('https://%s/%s/%s', $this->getHost(), self::BASE_ENDPOINT, ltrim($endpoint, '/'));
     }
 
     /**
